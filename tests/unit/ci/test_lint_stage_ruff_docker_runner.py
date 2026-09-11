@@ -129,4 +129,4 @@ def test_ruff_runner_rejects_unknown_mode(
 
 def test_pinned_ruff_version_is_repo_contract() -> None:
     repo_root = Path(__file__).resolve().parents[3]
-    assert pinned_ruff_version(repo_root) == "0.16.5"
+    assert pinned_ruff_version(repo_root) == "0.16.6"
