@@ -68,7 +68,8 @@ Dieses Dokument definiert:
   `cdb.agent_execution.v1`, nicht hier)
 - Kein Ersatz und keine Umbenennung der **GitHub Workflow Control Plane**
   (`.github/CONTROL_PLANE.md`, `#1640`/`#1644`-Lineage)
-- Kein neuer Merge-Prozess und kein Bypass von `cdb-local-ci`
+- Kein neuer Merge-Prozess und kein Bypass der hosted Required Checks
+  (`ci (Unit/Integration + Lint gesammelt)` + `policy-gate`)
 - Kein Live-/Echtgeld-GO; LR bleibt `NO-GO`; Board-Stage `trade-capable` ist
   kein Live-Go
 - Keine Runtime-, Trading-, Risk-, Execution-, produktive DB- oder MCP-Mutation
@@ -120,7 +121,7 @@ Delivery Slice in routed PR
     │
     ▼  (separate Merge session)
 Completeness Review → Batch Merge Conductor (Final-Head prep) →
-cdb-local-ci App Check Run → PR Reviewer APPROVE → Merge Agent → session-close
+hosted Required Checks (`ci` + `policy-gate`) → PR Reviewer APPROVE → Merge Agent → session-close
 ```
 
 Regeln:
@@ -243,9 +244,9 @@ Diese Evidence-Arten sind strikt getrennt. Keine darf die andere vortäuschen.
 | Evidence-Art | Was sie belegt | Was sie nicht belegt |
 | --- | --- | --- |
 | **Brain Evidence** | Kontext-/Trust-Lage aus Context tools/records oder ehrlichem Repo-Fallback | Ausführungserfolg, Final-CI, Merge-Reife |
-| **Agent Run Evidence** | Dass ein governed Provider-Lauf startete/endete und welche Artefakte entstand | `cdb-local-ci` SUCCESS; Completeness; Merge-Authority |
+| **Agent Run Evidence** | Dass ein governed Provider-Lauf startete/endete und welche Artefakte entstand | hosted Required Checks SUCCESS; Completeness; Merge-Authority |
 | **Targeted Slice Validation** | Eng begrenzte Tests/Checks für den Delivery-Slice | Full Fast-CI / Final-Head-CI |
-| **Final CI / `cdb-local-ci`** | Commitgebundene Final-Evidence auf exaktem PR-Head SHA | Slice-Lokalität; Brain-Kontext; Approval-als-Merge |
+| **Final CI / hosted Required Checks** | Commitgebundene Final-Evidence auf exaktem PR-Head SHA | Slice-Lokalität; Brain-Kontext; Approval-als-Merge |
 
 Regeln:
 
