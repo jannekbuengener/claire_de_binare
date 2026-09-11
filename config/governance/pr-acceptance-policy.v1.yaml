@@ -215,7 +215,7 @@
         "MERGE_CANDIDATE"
       ]
     ],
-    "trigger_semantics": "A routing merge trigger sets transport steward_state=merge_candidate, but acceptance lifecycle starts at COMPLETENESS_REVIEW. Only a green completeness verdict promotes acceptance state to MERGE_CANDIDATE. Conductor promotes FINAL_VALIDATION to FINAL_HEAD_READY_FOR_APPROVAL after Final-Head validation and cdb-local-ci readiness. MERGE_CANDIDATE and FINAL_HEAD_READY_FOR_APPROVAL never authorize merge by themselves. Regular merge is owned only by cdb_final_head_merge_executor after HEAD-bound APPROVE from cdb_final_head_pr_approval_gate."
+    "trigger_semantics": "A routing merge trigger sets transport steward_state=merge_candidate, but acceptance lifecycle starts at COMPLETENESS_REVIEW. Only a green completeness verdict promotes acceptance state to MERGE_CANDIDATE. Conductor promotes FINAL_VALIDATION to FINAL_HEAD_READY_FOR_APPROVAL after Final-Head validation and hosted Required Checks readiness (ci (Unit/Integration + Lint gesammelt) + policy-gate on the exact final head). MERGE_CANDIDATE and FINAL_HEAD_READY_FOR_APPROVAL never authorize merge by themselves. Regular merge is owned only by cdb_final_head_merge_executor after HEAD-bound APPROVE from cdb_final_head_pr_approval_gate."
   },
   "steward_acceptance_mapping": {
     "accepting_slices": [

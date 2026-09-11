@@ -86,6 +86,13 @@ def test_lifecycle_states_and_transitions() -> None:
     assert "COMPLETENESS_REVIEW" in note
 
 
+def test_trigger_semantics_readiness_is_hosted_not_cdb_local_ci() -> None:
+    note = _policy()["lifecycle"]["trigger_semantics"]
+    assert "cdb-local-ci" not in note
+    assert "ci (Unit/Integration + Lint gesammelt)" in note
+    assert "policy-gate" in note
+
+
 def test_steward_acceptance_mapping() -> None:
     mapping = _policy()["steward_acceptance_mapping"]
     assert mapping["accepting_slices"] == ["ACCEPTING_SLICES", "SLICE_IN_REVIEW"]
