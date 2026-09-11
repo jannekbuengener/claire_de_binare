@@ -30,6 +30,15 @@ SCHEMA_RELPATH = "docs/contracts/cdb_protection_live_attestation.v1.schema.json"
 SHA40 = re.compile(r"^[a-f0-9]{40}$")
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 DEFAULT_PROTECTION_ATTESTATION_MAX_AGE_HOURS = 24
+DEFAULT_PROTECTION_ATTESTATION_MAX_FUTURE_SKEW_MINUTES = 5
+GH_TIMEOUT_EXIT_CODE = -1
+_PROTECTION_READ_HINT = (
+    "Classic branch protection read requires repository administration "
+    "read (admin:true on PAT or administration:read on GitHub App). "
+    "Cursor Cloud ghs_ installation tokens typically lack this; "
+    "use trusted cdb-protection-live attestation from cdb-local-ci "
+    "or grant administration:read on the provider installation."
+)
 
 
 @dataclass(frozen=True)
@@ -102,13 +111,22 @@ def probe_branch_protection_api(
 ) -> tuple[dict[str, Any] | None, ProtectionReadError | None]:
     """Read live classic branch protection; fail closed with diagnostics."""
     endpoint = f"repos/{owner}/{repo}/branches/{base_branch}/protection"
-    result = subprocess.run(
-        ["gh", "api", endpoint],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=timeout,
-    )
+    try:
+        result = subprocess.run(
+            ["gh", "api", endpoint],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return None, ProtectionReadError(
+            endpoint=endpoint,
+            http_status=None,
+            gh_exit_code=GH_TIMEOUT_EXIT_CODE,
+            message=f"branch protection probe timed out after {timeout}s on {endpoint}",
+            hint=_PROTECTION_READ_HINT,
+        )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
         return None, ProtectionReadError(
@@ -116,13 +134,7 @@ def probe_branch_protection_api(
             http_status=_extract_http_status(detail),
             gh_exit_code=result.returncode,
             message=detail[:500] if detail else "gh api failed",
-            hint=(
-                "Classic branch protection read requires repository administration "
-                "read (admin:true on PAT or administration:read on GitHub App). "
-                "Cursor Cloud ghs_ installation tokens typically lack this; "
-                "use trusted cdb-protection-live attestation from cdb-local-ci "
-                "or grant administration:read on the provider installation."
-            ),
+            hint=_PROTECTION_READ_HINT,
         )
     raw = (result.stdout or "").strip()
     if not raw:
@@ -297,7 +309,10 @@ def _attestation_is_fresh(
         return False
     clock = now or _utc_now()
     max_age = timedelta(hours=_protection_attestation_max_age_hours(trust_policy))
-    return observed >= clock - max_age
+    max_future_skew = timedelta(
+        minutes=DEFAULT_PROTECTION_ATTESTATION_MAX_FUTURE_SKEW_MINUTES
+    )
+    return clock - max_age <= observed <= clock + max_future_skew
 
 
 def _envelope_digest(envelope: dict[str, Any]) -> str:
