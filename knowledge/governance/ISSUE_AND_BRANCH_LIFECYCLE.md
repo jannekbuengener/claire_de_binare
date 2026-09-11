@@ -98,7 +98,7 @@ Statuszusammenfassung hinter GitHub-Live-State, kosmetische Nachpflege.
 2. Aktuelles `main` integrieren.
 3. Kombinierten Diff reviewen.
 4. Vollständige Fast-CI auf exakt diesem Head ausführen.
-5. `cdb-local-ci=success` auf exakt diesem Head publizieren.
+5. Hosted Required Checks (`ci (Unit/Integration + Lint gesammelt)` + `policy-gate`) auf exakt diesem Head verifizieren.
 6. Head-, Base-, Review- und Lock-Evidence erneut prüfen.
 7. Normal mergen; kein Admin-Bypass ohne separate Human Authority.
 8. Nur vollständig gelieferte Issues nach verifiziertem Main-Merge schließen.
