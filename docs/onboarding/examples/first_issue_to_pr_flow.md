@@ -117,7 +117,8 @@ Restunsicherheit. Finish the normal Session as
 
 Only after a Merge Trigger freezes the PR as `merge_candidate`:
 
-1. Live `cdb-local-ci` SUCCESS on the exact PR head SHA (Commit Status).
+1. Hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate`
+   SUCCESS live on the exact PR head SHA.
 2. Combined diff remains in scope; Full Fast-CI is bound to Head and Base.
 3. No new stop condition appeared in comments or checks.
 4. No live, runtime, Docker, trading, DB write, memory write, or LR change was

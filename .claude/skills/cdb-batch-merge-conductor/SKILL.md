@@ -9,10 +9,10 @@ Drift Policy: Surface-Adapter duerfen nur mit dokumentierter Begruendung abweich
 name: cdb-batch-merge-conductor
 description: >
   Final-Head Preparation Conductor for a MERGE_CANDIDATE PR. Freezes slices,
-  integrates main, binds final head/base, delegates Final Validation, publishes
-  or verifies App-bound cdb-local-ci (app_id=4410232), and hands off
-  FINAL_HEAD_READY_FOR_APPROVAL to cdb_final_head_pr_approval_gate. Does not
-  approve or merge. Never --admin.
+  integrates main, binds final head/base, delegates Final Validation, verifies
+  hosted Required Checks (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`),
+  and hands off FINAL_HEAD_READY_FOR_APPROVAL to cdb_final_head_pr_approval_gate.
+  Does not approve or merge. Never --admin.
 disable-model-invocation: true
 ---
 
@@ -38,7 +38,8 @@ Evidence marker: `<!-- cdb-pr-acceptance:v1 -->`
 - Main-Integration
 - Final-Head- und Base-Erfassung
 - Delegation der finalen Prüfungen
-- Required-Status-Verifikation (`cdb-local-ci` App Check Run)
+- Required-Status-Verifikation (hosted Checks `ci (Unit/Integration + Lint
+  gesammelt)` + `policy-gate`)
 - Handoff `FINAL_HEAD_READY_FOR_APPROVAL` → `cdb_final_head_pr_approval_gate`
 - Deferred closure ledger rows for later `cdb-session-close` (after Merge Agent)
 
@@ -61,8 +62,8 @@ Evidence marker: `<!-- cdb-pr-acceptance:v1 -->`
 - No field `human_merge_authorization`.
 - No status `BLOCKED_HUMAN_AUTHORITY`.
 - Conductor readiness is gate-based against
-  `docs/runbooks/merge_policy_ci_gate.md` for Final-Head / `cdb-local-ci`
-  readiness only — not merge execution authority.
+  `docs/runbooks/merge_policy_ci_gate.md` for Final-Head / hosted Required
+  Check readiness only — not merge execution authority.
 - Missing publisher/auth capability before handoff →
   `DONE_PR_OPEN_MERGE_HANDOFF` (Final Head not ready), never `--admin`.
 - After successful Final-Head readiness, stop. Do not approve. Do not merge.
@@ -71,7 +72,8 @@ Evidence marker: `<!-- cdb-pr-acceptance:v1 -->`
 
 1. `FREEZE` — set acceptance lifecycle `FROZEN`; no further slices; reject new slices
 2. `MAIN_INTEGRATION` — integrate current `origin/main`; rebind head/base
-3. `FINAL_VALIDATION` — delegate Full Fast-CI, policy-gate mirror, `cdb-local-ci`
+3. `FINAL_VALIDATION` — delegate Full Fast-CI, policy-gate mirror, hosted
+   Required Checks
 4. `HANDOFF_APPROVAL` — emit `FINAL_HEAD_READY_FOR_APPROVAL` to
    `cdb_final_head_pr_approval_gate`
 5. `HANDOFF_SESSION_CLOSE` — after Merge Agent live merge only, pass
@@ -94,10 +96,11 @@ invalidates the old Completeness bundle and forces a fresh
 9. Delegate final validation path to existing skills (`cdb-ci-cd-guard`, etc.).
 10. Run Full Fast-CI once on the exact final head.
 11. Run local policy-gate mirror.
-12. Publish or verify `cdb-local-ci` as an App-bound Check Run (`app_id=4410232`)
-    on exactly that head.
-13. Re-check head, base, reviews, and required Check Run immediately before
-    handoff.
+12. Publish or verify the hosted Required Checks
+    (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`) on exactly that
+    head.
+13. Re-check head, base, reviews, and required hosted Check Runs immediately
+    before handoff.
 14. Set lifecycle to `FINAL_HEAD_READY_FOR_APPROVAL` and hand off to
     `cdb_final_head_pr_approval_gate`. Do not approve. Do not merge.
 15. When Merge Agent has live-verified MERGED, hand only ledger rows with

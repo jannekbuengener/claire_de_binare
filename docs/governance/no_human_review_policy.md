@@ -23,16 +23,17 @@ and PR #1024.
 **Merge gate = required checks + live branch protection settings on `main`.**
 
 SSOT for the required check contract: [`docs/runbooks/merge_policy_ci_gate.md`](../runbooks/merge_policy_ci_gate.md).
-The only merge-relevant required context on `main` is `cdb-local-ci` (a Commit
-Status, exact PR head SHA). `ci (Unit/Integration + Lint gesammelt)` and
-`policy-gate` are Hosted GitHub Actions workflow content that remain useful
-as advisory/safety signals but are **not** branch-protection-required
-(migration #4169).
+The merge-relevant required contexts on `main` are the hosted Check Runs
+`ci (Unit/Integration + Lint gesammelt)` and `policy-gate` (exact PR head SHA,
+live via `gh api`). `cdb-local-ci` (Local CI Status Publisher, App Check Run
+`app_id=4410232`) is seit #4540 optionaler Developer-Preflight/Diagnose und
+**kein** branch-protection-required Context.
 
 A PR may merge when:
-1. The required status check passes (`cdb-local-ci`, live via `gh api`)
-2. Hosted Actions advisory checks are green, skipped with explanation, or
-   documented as non-blocking infra (billing/lock ≠ code failure)
+1. The required hosted status checks pass (`ci (Unit/Integration + Lint
+   gesammelt)` + `policy-gate`, live via `gh api` Check Runs)
+2. Optional `cdb-local-ci` preflight is green where run, or documented as not
+   required (infra/billing/lock ≠ code failure)
 3. Live branch protection remains satisfied — reverify with `gh api`, do not
    assume this document's field values are current (see table below)
 4. A self-review comment is present (see template below)
@@ -83,7 +84,7 @@ PR authors post this as a comment before merge:
 
 | Risk | Mitigation |
 |------|-----------|
-| Bad code merges without review | Required merge context on `main`: `cdb-local-ci` (App Check Run `app_id=4410232`); Hosted Actions (`ci`, `policy-gate`) remain advisory/safety-relevant |
+| Bad code merges without review | Required merge contexts on `main`: hosted Check Runs `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` (Branch Protection, strict) |
 | Schema/infra breakage | Runbooks required for infra PRs; enforcement scripts are opt-in operator steps |
 | Silent behavioral regression | Decision contract tests (`tests/contract/`), deterministic gate in conftest.py |
 | Accidental secret exposure | Auxiliary scans (for example `gitleaks`) plus PR hygiene; not a required merge context on `main` |
@@ -117,7 +118,7 @@ gh api repos/jannekbuengener/Claire_de_Binare/branches/main/protection
 
 | Setting | Last-known live value | Purpose |
 |---------|-------|---------|
-| `required_status_checks.checks` | `[{"context":"cdb-local-ci","app_id":4410232}]` | Sole merge-relevant required context on `main` (App Check Run) |
+| `required_status_checks.checks` | `[{"context":"ci (Unit/Integration + Lint gesammelt)"},{"context":"policy-gate"}]` | Merge-relevant required contexts on `main` (hosted Check Runs, kein festes `app_id`) |
 | `required_status_checks.strict` | `true` | Branch must be up-to-date |
 | `enforce_admins` | `true` | Admins also bound by checks |
 | `required_conversation_resolution` | `false` | Verify live — do not assume `true` |

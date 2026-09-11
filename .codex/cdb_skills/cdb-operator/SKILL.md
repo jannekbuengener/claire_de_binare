@@ -36,7 +36,8 @@ Use this skill when working on Claire_de_Binare with OpenCode.
    closure. Regular merge is never a Delivery Mode action and must not bypass
    the Final-Head pipeline in
    `docs/contracts/final_head_merge_pipeline.v1.md`.
-   `--admin` is never a substitute for a missing `cdb-local-ci`.
+   `--admin` is never a substitute for missing/red hosted Required Checks
+   (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`).
 10. After a live-verified merge, local post-merge cleanup is
     evidence-based only (`cdb-session-close` § Safe Post-Merge Cleanup):
     never discard unsaved changes, never `branch -D` without tree/patch
@@ -47,8 +48,8 @@ Use this skill when working on Claire_de_Binare with OpenCode.
 
 Stop immediately on missing bootloader, unclear scope, unexpected diff, failed
 targeted slice validation, or scope growth. In Final-Head preparation also stop
-on red `cdb-local-ci` for the exact final head (the sole required merge
-context; Hosted Actions red is advisory). Delivery sessions must not attempt
+on red hosted Required Checks for the exact final head (`ci (Unit/Integration +
+Lint gesammelt)`, `policy-gate`; branch-protection-required since #4540). Delivery sessions must not attempt
 merge. Also stop on live-readiness/echtgeld implication, or a cleanup request
 that would discard unsaved/unmerged local work.
 
@@ -60,8 +61,9 @@ that would discard unsaved/unmerged local work.
   `MERGE_CANDIDATE` may enter Final-Head preparation. `MERGE_CANDIDATE` alone
   never authorizes approve or merge.
 - **Final-Head Preparation:** `cdb-batch-merge-conductor` freezes, integrates
-  main, runs Full Fast-CI, publishes/verifies exact-SHA App Check Run
-  `cdb-local-ci` (`app_id=4410232`), and stops at
+  main, runs Full Fast-CI, verifies hosted Required Checks
+  (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`) on the exact SHA,
+  and stops at
   `FINAL_HEAD_READY_FOR_APPROVAL`. Conductor does not approve or merge.
 - **Approval:** `cdb_final_head_pr_approval_gate` (PR Reviewer) issues GitHub
   APPROVE bound to the exact final `HEAD_SHA`. Cannot merge.

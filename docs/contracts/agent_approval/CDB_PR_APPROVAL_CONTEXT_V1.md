@@ -92,8 +92,9 @@ Hard rules:
 - Name alone is insufficient for `matches_protection`.
 - When protection requires an `app_id`, it must match.
 - Operative truth is the **injected protection/ruleset snapshot**.
-- Current default documentation (not hardcoded universal truth): required
-  context `cdb-local-ci` as App Check Run `app_id=4410232` — see
+- Current default documentation (not hardcoded universal truth): two hosted
+  Required Checks `ci (Unit/Integration + Lint gesammelt)` and `policy-gate`
+  (no fixed `app_id`) — see
   [`../../runbooks/merge_policy_ci_gate.md`](../../runbooks/merge_policy_ci_gate.md).
 
 ## Drift

@@ -1,13 +1,12 @@
 {
-  "timestamp_berlin": "2026-08-01T14:25:00+02:00",
-  "timestamp_utc": "2026-08-01T12:25:00Z",
+  "timestamp_berlin": "2026-09-11T12:00:00+02:00",
+  "timestamp_utc": "2026-09-11T10:00:00Z",
   "contexts": [
-    "cdb-local-ci"
+    "ci (Unit/Integration + Lint gesammelt)",
+    "policy-gate"
   ],
-  "check_run_contexts": [
-    "cdb-local-ci"
-  ],
-  "required_app_id": 4410232,
+  "check_run_contexts": [],
+  "required_app_id": null,
   "source": "branch_protection_main",
-  "note": "Post-#4170 Phase D: App-bound Check Run cdb-local-ci (app_id=4410232). Same-named Commit Status is not merge-sufficient."
+  "note": "Post-#4540: required checks are hosted GitHub Actions job names (ci.yml 'ci (Unit/Integration + Lint gesammelt)', policy-gate.yml 'policy-gate'). Local Fast-CI / cdb-local-ci is developer preflight only and not merge-required."
 }

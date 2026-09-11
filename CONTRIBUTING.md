@@ -178,8 +178,9 @@ docs(onboarding): reconcile zero-context developer setup
    the Issue.
 7. Before Final-Head, run `cdb-pr-completeness-review`; only a schema-valid
    `MERGE_CANDIDATE` may proceed. Then `cdb-batch-merge-conductor` freezes,
-   integrates main, runs Full Fast-CI, publishes exact-SHA App Check Run
-   `cdb-local-ci` (`app_id=4410232`), and hands off
+   integrates main, runs Full Fast-CI, verifies the hosted Required Checks
+   `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` for the exact-SHA
+   head, and hands off
    `FINAL_HEAD_READY_FOR_APPROVAL`. PR Reviewer
    (`cdb_final_head_pr_approval_gate`) APPROVEs the exact head; Merge Agent
    (`cdb_final_head_merge_executor`) performs regular squash-merge. Never bypass Completeness; never `--admin`.
@@ -218,13 +219,14 @@ Merge contract on `main` (SSOT:
 
 | Check | Source | Type |
 |-------|--------|------|
-| `cdb-local-ci` | Local CI Status Publisher | App Check Run `app_id=4410232` (the only merge-relevant required context) |
+| `ci (Unit/Integration + Lint gesammelt)` | `ci.yml` | GitHub-hosted Check Run (Actions) |
+| `policy-gate` | `policy-gate.yml` | GitHub-hosted Check Run (Actions) |
 
-`ci (Unit/Integration + Lint gesammelt)` (`.github/workflows/ci.yml`) and
-`policy-gate` (`.github/workflows/policy-gate.yml`) are Hosted GitHub
-Actions content. They remain useful advisory/safety signals (lint, tests,
-scope policy) but are **not** branch-protection-required since migration
-#4169. Verify the live required context with `gh api`, not this table.
+Seit Migration #4540 sind genau diese beiden hosted Checks die
+branch-protection-required Merge-Gates auf `main` (`strict: true`, kein festes
+`app_id`). `cdb-local-ci` (Local CI Status Publisher) ist **kein** Required
+Context mehr; er bleibt nur optionaler lokaler Preflight/Diagnose. Verify the
+live required contexts with `gh api`, not this table.
 
 Inside the CI gate: `ruff check .`, unit/integration tests, and Black on changed
 Python under `services/` and `tests/`. Coverage >= 80% applies when running
@@ -232,7 +234,7 @@ Python under `services/` and `tests/`. Coverage >= 80% applies when running
 every PR.
 
 Normal Issue-Slices use targeted Validation and do not publish
-`cdb-local-ci`. Full Fast-CI and the required App-bound Check Run apply to the exact,
+`cdb-local-ci`. Full Fast-CI and the hosted Required Checks apply to the exact,
 frozen final merge head.
 
 Classify your PR scope with the policy-gate rules in the merge-policy runbook.

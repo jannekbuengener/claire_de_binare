@@ -38,16 +38,16 @@ mehr.
 ## Merge-Vertrag
 
 SSOT: [`docs/runbooks/merge_policy_ci_gate.md`](../docs/runbooks/merge_policy_ci_gate.md).
-Der einzige merge-relevante Required Context auf `main` ist `cdb-local-ci`
-(Commit Status, lokaler Publisher, exakter PR-Head-SHA) — live verifizieren
-via `gh api`, nicht aus dieser Datei ableiten.
+Seit Migration #4540 sind genau zwei hosted Required Checks auf `main`
+merge-relevant: `ci (Unit/Integration + Lint gesammelt)` aus `ci.yml` und
+`policy-gate` aus `policy-gate.yml` (GitHub-hosted Check Runs, exakter
+PR-Head-SHA) — live verifizieren via `gh api`, nicht aus dieser Datei ableiten.
 
-`ci (Unit/Integration + Lint gesammelt)` aus `ci.yml` und `policy-gate` aus
-`policy-gate.yml` sind Hosted-GitHub-Actions-Inhalte, die als
-Safety-/Advisory-Signal nützlich bleiben, seit Migration #4169 aber **nicht
-mehr** branch-protection-required sind. Ein rotes Hosted-Actions-Billing-
-oder Runner-Lock ist eine Infrastruktur-Bedingung, kein Code-Fehler, und
-ersetzt nicht die Prüfung von `cdb-local-ci`.
+`cdb-local-ci` (lokaler Fast-CI-Publisher) ist seit #4540 **kein** Required
+Context mehr; er bleibt nur als optionaler lokaler Preflight-Publish erhalten.
+Ein rotes Hosted-Actions-Billing- oder Runner-Lock ist eine
+Infrastruktur-Bedingung, kein Code-Fehler, und ersetzt nicht die Prüfung der
+hosted Required Checks.
 
 Workflow-Dateien ohne dokumentierten operativen Zweck werden nicht als
 Deprecation-Stub aufbewahrt, sondern zusammen mit Tests und aktueller Doku

@@ -89,9 +89,8 @@ def test_main_integration_rebinds_sha_and_drift_forces_completeness() -> None:
 
 def test_app_check_run_publish_and_no_admin() -> None:
     text = _skill()
-    assert "cdb-local-ci" in text
-    assert "Check Run" in text
-    assert "4410232" in text
+    assert "policy-gate" in text
+    assert "hosted Required" in text
     assert "--admin" in text
     assert "Fake-Green" in text
 

@@ -6,24 +6,27 @@ Lokale, Docker-fähige CI-Ausführungsschicht für Claire_de_Binare.
 
 - **Phase 1:** Scaffold + Evidence-Contract unter `ci/`.
 - **Phase 3a + BP #4169:** Nach strikter Evidence-Validation setzt der
-  Status-Publisher (`ci/publisher/`) den Required App Check Run `cdb-local-ci`
-  (`app_id=4410232`, `--publisher-backend check-run`).
+  Status-Publisher (`ci/publisher/`) den optionalen Local-Preflight-Publish
+  `cdb-local-ci` (`app_id=4410232`, `--publisher-backend check-run`).
   Siehe [docs/ci/local-status-publisher.md](../docs/ci/local-status-publisher.md).
 - **#4170 Phase D (live):** Default publisher path is App-bound Check Run
   (`--publisher-backend check-run`, `app_id=4410232`). Commit Status remains
   legacy/debug only and does **not** satisfy Branch Protection.
   Siehe [docs/runbooks/cdb_local_ci_app_check_run_cutover.md](../docs/runbooks/cdb_local_ci_app_check_run_cutover.md).
-- Lokale Evidence allein autorisiert keinen Merge; der published App Check Run
-  `cdb-local-ci` ist der live Required Context.
+- Lokale Evidence allein autorisiert keinen Merge; seit #4540 sind die hosted
+  Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate`
+  (exakter PR-Head-SHA) der live Required Context. Der lokale `cdb-local-ci`
+  Preflight-Publish ist optional/Diagnose.
 - `policy-gate.yml` bleibt als Workflow-Safety-Gate; der lokale Mirror
-  (`tools/ci/policy_gate_local.py`) ist Publish-Pflicht für `cdb-local-ci`.
+  (`tools/ci/policy_gate_local.py`) ist optionaler Preflight-Publish für
+  `cdb-local-ci`.
 - Lokales CodeQL/SARIF ersetzt **nicht** den GitHub Security-Tab.
 - LR bleibt **NO-GO**. Kein BLUE/RED als Default-CI. Kein GHCR-Push.
 - Merge follows Final-Head → PR Reviewer → Merge Agent
   ([`docs/contracts/final_head_merge_pipeline.v1.md`](../docs/contracts/final_head_merge_pipeline.v1.md)).
-  `cdb-local-ci` SUCCESS on the exact PR head SHA is required Final-Head
-  evidence; missing readiness → honest `DONE_PR_OPEN_MERGE_HANDOFF`, never
-  `--admin`.
+  Hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate`
+  SUCCESS on the exact PR head SHA is required Final-Head evidence; missing
+  readiness → honest `DONE_PR_OPEN_MERGE_HANDOFF`, never `--admin`.
 
 ## Preferred Windows front door
 
@@ -161,14 +164,14 @@ for ci_image/test_runner/postgres/redis, compose project template
 | Surface | Local | GitHub |
 |---------|-------|--------|
 | Fast validation | `ci/scripts/run.py --profile fast` | `.github/workflows/ci.yml` thin wrapper → same orchestrator |
-| Job `ci (Unit/Integration + Lint gesammelt)` | stages lint/unit/docs/governance (+ report) | advisory check-run name (not BP-required) |
-| `policy-gate` | local mirror at publish only; **no full parity** | GitHub-native `policy-gate.yml` (PR API) |
+| Job `ci (Unit/Integration + Lint gesammelt)` | stages lint/unit/docs/governance (+ report) | BP-required hosted Check Run on `main` (since #4540) |
+| `policy-gate` | local mirror at publish only; **no full parity** | GitHub-native `policy-gate.yml` (PR API), BP-required |
 | `surrealdb-validate` job | covered inside governance stage | path-filtered GitHub-native remainder in `ci.yml` |
 | Docs Conflict / Canon | docs stage modules | also separate advisory workflows |
 | CodeQL | optional local SARIF | Security-tab authoritative |
-| Branch Protection | — | required: `cdb-local-ci` (App Check Run `app_id=4410232`) |
+| Branch Protection | — | required (hosted): `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` |
 | Local evidence | advisory artifacts until publish | — |
-| Status publisher (Phase 3a/#4170) | App Check Run after validation | required `cdb-local-ci` (`app_id=4410232`) |
+| Status publisher (Phase 3a/#4170) | optional Local Preflight-Publish `cdb-local-ci` | not BP-required since #4540 |
 
 ### Workflow → Stage mapping (`ci.yml` job `ci`)
 
@@ -184,8 +187,9 @@ GitHub-native remainder (not replaced by local orchestrator):
 - `surrealdb-validate` job in `ci.yml` (path-filtered early SurrealQL syntax check)
 - `.github/workflows/policy-gate.yml` (full PR/label/permission evaluation)
 
-Do **not** treat the job name `ci (Unit/Integration + Lint gesammelt)` as the live
-required context. Live required context is App Check Run `cdb-local-ci` (`app_id=4410232`).
+The hosted job name `ci (Unit/Integration + Lint gesammelt)` (and `policy-gate`)
+ist seit #4540 der live Required Context auf `main`; `cdb-local-ci` ist nur noch
+optionaler lokaler Preflight-Publish.
 
 ## Architecture
 

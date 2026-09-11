@@ -30,7 +30,7 @@ behavior to the stable role ids.
 | M2 | acceptance | Integration Wiring Audit | false |
 | M3 | acceptance | Gap Classification | false |
 | M4 | acceptance | Completeness → `MERGE_CANDIDATE` | false |
-| M5 | `cdb-batch-merge-conductor` | Freeze, integrate main, bind final head/base, Final Validation, publish/verify `cdb-local-ci` → `FINAL_HEAD_READY_FOR_APPROVAL` | false |
+| M5 | `cdb-batch-merge-conductor` | Freeze, integrate main, bind final head/base, Final Validation, verify hosted Required Checks (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`) → `FINAL_HEAD_READY_FOR_APPROVAL` | false |
 | M6 | `cdb_final_head_pr_approval_gate` | `APPROVE` bound to exact final `HEAD_SHA` | false |
 | M7 | `cdb_final_head_merge_executor` | Regular merge after re-verify | true (only this role) |
 | M8 | `cdb-session-close` | Verify MERGED, issue close eligibility, safe cleanup | false |
@@ -46,9 +46,10 @@ Exactly one canonical final merge executor exists:
 4. Merge Agent must not approve or modify code.
 5. Approval is invalid when HEAD changes, a new commit lands, or relevant Base
    drift occurs.
-6. Required context remains App-bound Check Run `cdb-local-ci`
-   (`app_id=4410232`) on the exact final head. Same-named Commit Status is not
-   sufficient. Wrong-app Check Run is not sufficient.
+6. Required contexts are the hosted GitHub Checks `ci (Unit/Integration + Lint
+   gesammelt)` and `policy-gate` on the exact final head (no hardcoded
+   `app_id`; hosted GitHub Actions App). Same-named Commit Status is not
+   sufficient.
 7. Cloud Reviewer/Merger are repo-only by design; they must not require local
    `cdb_context` or fabricate DB evidence.
 8. `--admin` is never a bypass.
@@ -82,7 +83,8 @@ Before regular merge command
 - approval identity and approval `HEAD_SHA`
 - current `HEAD_SHA` equals approval binding
 - base/drift gates
-- `cdb-local-ci` App Check Run SUCCESS (`app_id=4410232`)
+- hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` and
+  `policy-gate` SUCCESS on the exact final head
 - reviews / mergeability / branch protection
 - loop guard: HEAD change or stale approval → re-request Reviewer, do not merge
 

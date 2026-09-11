@@ -23,12 +23,12 @@ Evidence anchors from triage:
 2. Check for the approval banner (`Approval required`).
 3. Click `Approve and run` (or equivalent approval button).
 4. Verify jobs are created and start running (no longer `jobs=[]`).
-5. Verify the required context on the PR head: `cdb-local-ci` (the sole
-   branch-protection-required Commit Status; SSOT:
+5. Verify the required contexts on the PR head: `ci (Unit/Integration + Lint
+   gesammelt)` and `policy-gate` (the branch-protection-required hosted
+   Checks; SSOT:
    [`merge_policy_ci_gate.md`](../runbooks/merge_policy_ci_gate.md)). Hosted
-   Actions contexts like `ci (Unit/Integration + Lint gesammelt)` are
-   advisory only — approving their run does not by itself satisfy the merge
-   gate.
+   Actions runs must emit these two check names — approve the run so the
+   required merge gate can be satisfied.
 
 Important:
 - Approve only; do not post or expose secret values.
@@ -70,9 +70,9 @@ Decision tree:
 ## E) Maintainer Checklist (Daily Ops)
 - If a PR run is `action_required`:
   - 1) Approve run.
-  - 2) Confirm the actual required merge context is live-green on the exact
-       PR head SHA: `cdb-local-ci` (verify via `gh api`). Hosted Actions
-       context emission alone is advisory evidence, not the merge gate.
+  - 2) Confirm the actual required merge contexts are live-green on the exact
+       PR head SHA: `ci (Unit/Integration + Lint gesammelt)` and `policy-gate`
+       (verify via `gh api` check runs; `required-checks-audit.yml` audits it).
   - 3) If recurring, review governance settings using MODE 1 vs MODE 2.
 
 ## F) Do / Don't
@@ -83,5 +83,5 @@ DO:
 
 DON'T:
 - Do not switch workflows to `pull_request_target` as a quick fix (scope/threat-model risk).
-- Do not rename workflows/jobs that participate in required-check context stability.
+- Do not rename workflows/jobs that participate in required-check context stability (`ci`, `policy-gate`).
 - Do not treat `action_required` as a flaky test symptom.

@@ -54,7 +54,17 @@ FROZEN_LEGACY_WORKFLOW_FILES: frozenset[str] = frozenset()
 
 ACTIVE_CANONICAL_CI_WORKFLOW = "ci.yml"
 
-REQUIRED_CHECK_CONTEXTS = frozenset({"cdb-local-ci"})
+REQUIRED_CHECK_CONTEXTS = frozenset(
+    {
+        "ci (Unit/Integration + Lint gesammelt)",
+        "policy-gate",
+    }
+)
+"""Hosted GitHub Actions required check contexts on `main` (post-#4540).
+
+SSOT: docs/runbooks/merge_policy_ci_gate.md; live baseline snapshot at
+docs/evidence/reports/REQUIRED_CHECK_CONTEXTS_BASELINE_main.json.
+"""
 
 NON_REQUIRED_GUARD_WORKFLOWS = frozenset(
     {
@@ -679,8 +689,9 @@ AGENT_WORKFLOW_MAP_JSON = (
     REPO_ROOT / ".github" / "control-plane" / "generated" / "agent-workflow-map.json"
 )
 
-# Post-#4170: required context is App-bound Check Run `cdb-local-ci` (`app_id=4410232`), not a workflow job.
-REQUIRED_CHECK_PRODUCER_FILES: frozenset[str] = frozenset()
+# Post-#4540: required contexts are hosted GitHub Actions job names (ci/policy-gate),
+# not a locally-published App Check Run.
+REQUIRED_CHECK_PRODUCER_FILES: frozenset[str] = frozenset({"ci.yml", "policy-gate.yml"})
 
 RISKY_CASCADE_FAMILIES: dict[str, tuple[str, ...]] = {
     "label_event_cascade": tuple(sorted(LABEL_CASCADE_WORKFLOW_FILES)),

@@ -3,7 +3,7 @@ name: cdb-final-head-pr-approval-gate
 description: >
   Final-Head PR Reviewer (cdb_final_head_pr_approval_gate). May GitHub-APPROVE
   only after repo eligibility CLI returns APPROVE_RECOMMENDED on exact HEAD.
-  Never merge. Never approve on draft, accepting_slices, or missing cdb-local-ci.
+  Never merge. Never approve on draft, accepting_slices, or missing hosted Required Checks.
 readonly: false
 ---
 
@@ -14,7 +14,7 @@ Stable role id: `cdb_final_head_pr_approval_gate`
 ## Authority
 
 - GitHub `APPROVE` review on **exact final HEAD_SHA** only
-- Must **not** merge, modify code, or publish `cdb-local-ci`
+- Must **not** merge, modify code, or publish checks
 
 ## Mandatory preflight (fail-closed)
 
@@ -53,7 +53,8 @@ Never APPROVE when any of:
 - `draft=true`
 - `steward_state=accepting_slices`
 - No provenance-validated `FINAL_HEAD_READY_FOR_APPROVAL` Conductor handoff
-- Missing or wrong-app `cdb-local-ci` Check Run (`app_id=4410232`) on exact HEAD
+- Missing hosted Required Check (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`)
+  on exact HEAD
 - `approval eligibility` exit != 0
 
 ## References

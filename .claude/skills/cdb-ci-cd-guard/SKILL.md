@@ -37,17 +37,18 @@ disable-model-invocation: true
 - No silent stub or mock path on protected refs.
 - Missing critical secrets on protected refs must fail closed.
 - Without explicit approval, default to audit plus fix plan rather than mutation.
-- The sole live merge-relevant required context is `cdb-local-ci`, an
-  App-bound **Check Run** (`app_id=4410232`), not a Commit Status. Verify
-  live with `gh api` on `/commits/<sha>/check-runs`; do not hardcode a
-  required-checks list from memory. Hosted Actions check-runs are
-  advisory/safety-relevant only (migration #4169).
+- The merge-relevant required contexts are the hosted Check Runs
+  `ci (Unit/Integration + Lint gesammelt)` (#4540) and `policy-gate` — not a
+  Commit Status. Verify live with `gh api` on `/commits/<sha>/check-runs`; do
+  not hardcode a required-checks list from memory. `cdb-local-ci` (Local CI
+  Status Publisher, App Check Run `app_id=4410232`) is seit #4540 optionaler
+  Developer-Preflight/Diagnose und kein branch-protection-required Context.
 - This skill validates and helps publish Final-Head CI evidence. It does
   **not** own approval or merge. Regular merge is owned only by
   `cdb_final_head_merge_executor` after HEAD-bound APPROVE from
   `cdb_final_head_pr_approval_gate` (see
   `docs/contracts/final_head_merge_pipeline.v1.md`). `--admin` is never a
-  valid bypass for a missing/red `cdb-local-ci`.
+  valid bypass for missing/red hosted Required Checks.
 - CI PASS / green Hosted Actions does **not** authorize blind local post-merge
   cleanup. After `--delete-branch`, remote absence is expected; local
   worktree/branch removal remains evidence-based
@@ -88,7 +89,8 @@ This skill audits CI/CD tooling with external documentation dependencies:
 - Lint/Format für betroffene Dateien,
 - `git diff --check`,
 - kein Full Fast-CI als Default für Delivery-Slices,
-- **kein** `cdb-local-ci` Publish (Publisher rejected slice evidence).
+- **kein** `cdb-local-ci` Publish als Merge-Evidence (Publisher rejected slice
+  evidence; Preflight bleibt optional, ist aber kein Required Check).
 - Stage-/Unit-Timing: `reports/stage_timing.json`, `reports/unit_timing.json`
   (`--durations`) — ändert nicht Pass/Fail.
 
@@ -99,12 +101,13 @@ This skill audits CI/CD tooling with external documentation dependencies:
   (`pytest -q -k "not test_mcp_time_server_runtime"` unverändert),
 - integrierter Base-SHA ist in der Evidence gebunden,
 - lokaler Policy-Gate-Mirror ist grün,
-- `cdb-local-ci=success` liegt als App-gebundener Check Run (`app_id=4410232`) auf exakt diesem Head,
+- hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` und
+  `policy-gate` sind grün auf exakt diesem Head (Branch Protection,
+  kein hartkodiertes `app_id`),
 - Head-/Base-Drift erzwingt vollständige Revalidierung.
 - Slice-Validation ist **kein** Ersatz für Final-Head-Evidence.
 
 Check Runs und Commit Status sind getrennte GitHub-Typen. Ein namensgleicher
-**Commit Status** erfüllt den required App Check Run `cdb-local-ci`
-(`app_id=4410232`) nicht. Cloud Approval/Merge agents only consume the
-published Check Run; they do not fabricate local CI. Slice Validation never
-becomes Final-Head Evidence.
+**Commit Status** erfüllt die hosted Required Checks nicht. Cloud
+Approval/Merge agents only consume the hosted Check Runs; they do not
+fabricate local CI. Slice Validation never becomes Final-Head Evidence.

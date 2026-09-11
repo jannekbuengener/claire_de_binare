@@ -1,6 +1,6 @@
 {
   "skill_name": "gh-fix-ci",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "evals": [
     {
       "name": "no_failing_checks",
@@ -10,7 +10,7 @@
       "expected_output_contains": [
         "MERGE_READY"
       ],
-      "note": "PR #807 had all checks passing (as of 2026-02-08); required context is now cdb-local-ci (App Check Run app_id=4410232) post-#4170 Phase D, re-verify against a current PR"
+      "note": "PR #807 had all checks passing (as of 2026-02-08); required contexts are the hosted Check Runs ci (Unit/Integration + Lint gesammelt) and policy-gate (Branch Protection, #4540), re-verify against a current PR"
     },
     {
       "name": "failing_check_mypy",
@@ -67,25 +67,25 @@
     },
     {
       "name": "required_checks_validation",
-      "description": "Should validate the single live required merge context (cdb-local-ci)",
+      "description": "Should validate the hosted required merge contexts (ci (Unit/Integration + Lint gesammelt), policy-gate)",
       "command": "python docs/skills/gh-fix-ci/scripts/inspect_pr_checks.py --pr 807 --repo jannekbuengener/Claire_de_Binare",
       "expected_exit_code": 0,
       "expected_output_contains": [
         "MERGE_READY"
       ],
-      "note": "SSOT: docs/runbooks/merge_policy_ci_gate.md. Post-#4170 Phase D only cdb-local-ci (App Check Run app_id=4410232) is merge-relevant; the former 8-check list is advisory only."
+      "note": "SSOT: docs/runbooks/merge_policy_ci_gate.md. Post-#4540 the hosted Check Runs ci (Unit/Integration + Lint gesammelt) and policy-gate are merge-relevant; cdb-local-ci is optional developer preflight/diagnose."
     },
     {
       "name": "required_status_missing",
-      "description": "Should report REQUIRED_STATUS_MISSING when cdb-local-ci is absent for the exact head SHA",
+      "description": "Should report REQUIRED_STATUS_MISSING when a required check is absent for the exact head SHA",
       "command": "python docs/skills/gh-fix-ci/scripts/inspect_pr_checks.py --pr 807 --repo jannekbuengener/Claire_de_Binare",
       "expected_exit_code": 0,
       "expected_output_contains": [
         "REQUIRED_STATUS_MISSING",
-        "cdb-local-ci"
+        "policy-gate"
       ],
-      "note": "Applies to any PR head SHA where the local publisher has not yet published cdb-local-ci",
-      "skip_reason": "Requires a live PR without a published cdb-local-ci status at test time"
+      "note": "Applies to any PR head SHA where a hosted Required Check has not yet completed for that SHA",
+      "skip_reason": "Requires a live PR without a completed hosted Required Check at test time"
     },
     {
       "name": "polling_wait_mode",

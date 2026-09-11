@@ -107,8 +107,9 @@ PR #2639 was blocked on `required_conversation_resolution` despite green CI. Pat
 2. Confirm thread had no open human action items.
 3. `resolveReviewThread` with the returned `threadId` (Step 2).
 4. Verify unresolved count `0` (Step 3).
-5. `gh pr merge 2639 --squash --delete-branch` after live `cdb-local-ci`
-   SUCCESS on the exact PR head (SSOT: `docs/runbooks/merge_policy_ci_gate.md`).
+5. `gh pr merge 2639 --squash --delete-branch` after the hosted Required
+   Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` are SUCCESS
+   live on the exact PR head (SSOT: `docs/runbooks/merge_policy_ci_gate.md`).
    Never use `--admin` as a bypass.
 
 No secrets or tokens belong in thread bodies; sanitize before posting examples.

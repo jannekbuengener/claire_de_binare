@@ -66,18 +66,21 @@ safety_rules:
   - "Never auto-switch GitHub accounts"
   - "Suggest-only fixes (no auto-apply)"
 
-# SSOT: docs/runbooks/merge_policy_ci_gate.md. `cdb-local-ci` is the sole
-# live merge-relevant required context (App Check Run app_id=4410232, exact
-# PR head SHA). Same-named Commit Status is not merge-sufficient. Verify
-# live with `gh api`; do not hardcode elsewhere. Hosted GitHub Actions
-# check-runs (ci, validate-branch-name, gitleaks, trivy, Check Core
-# Duplicates, Check Delivery Gate, guard, E2E Happy Path) are
-# advisory/safety-relevant only since migration #4169.
+# SSOT: docs/runbooks/merge_policy_ci_gate.md. Merge-relevant required
+# contexts on `main` are the hosted Check Runs `ci (Unit/Integration + Lint
+# gesammelt)` and `policy-gate` (Branch Protection, #4540, exact PR head SHA).
+# Same-named Commit Status is not merge-sufficient. Verify live with `gh api`;
+# do not hardcode elsewhere. `cdb-local-ci` (Local CI Status Publisher, App
+# Check Run app_id=4410232) is optional developer preflight/diagnose and no
+# branch-protection-required context. Other hosted GitHub Actions check-runs
+# (validate-branch-name, gitleaks, trivy, Check Core Duplicates, Check
+# Delivery Gate, guard, E2E Happy Path) are advisory/safety-relevant only
+# since migration #4169.
 required_checks:
-  - "cdb-local-ci"
+  - "ci (Unit/Integration + Lint gesammelt)"
+  - "policy-gate"
 
 advisory_hosted_actions_checks:
-  - "ci (Unit/Integration + Lint gesammelt)"
   - "validate-branch-name"
   - "gitleaks (Secrets-Alarm)"
   - "trivy (kritische CVEs/Supply-Chain)"
@@ -168,6 +171,11 @@ notes: |
   - Suggest-only fixes (no auto-apply for safety)
 
 changelog:
+  - version: 1.2.0
+    date: 2026-09-11
+    changes:
+      - "BREAKING: required_checks are the hosted Check Runs ci (Unit/Integration + Lint gesammelt) and policy-gate (Branch Protection, #4540); cdb-local-ci is optional developer preflight/diagnose (App Check Run app_id=4410232, no longer required), per merge_policy_ci_gate.md"
+      - inspect_pr_checks.py: REQUIRED_CHECKS updated; advisory section no longer lists ci (now required)
   - version: 1.1.0
     date: 2026-07-30
     changes:

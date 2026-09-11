@@ -44,11 +44,11 @@ def test_ci_workflow_identity_stable() -> None:
     payload = _load_ci()
     assert payload.get("name") == "ci"
     triggers = helpers.extract_on_triggers(payload)
-    # #4401: PR trigger removed; push-to-main + workflow_dispatch retained.
-    assert triggers == {"push", "workflow_dispatch"}
+    # #4540: ci.yml runs on pull_request, push-to-main and workflow_dispatch.
+    assert triggers == {"push", "workflow_dispatch", "pull_request"}
     text = CI_WORKFLOW.read_text(encoding="utf-8")
     assert "branches: [ main ]" in text or "branches: [main]" in text
-    assert "pull_request" not in helpers.extract_on_triggers(payload)
+    assert "pull_request" in helpers.extract_on_triggers(payload)
     row = helpers.build_trigger_permission_row(CI_WORKFLOW)
     assert row.write_permissions == ()
     permissions = helpers.extract_top_level_permissions(payload)
@@ -104,11 +104,13 @@ def test_ci_workflow_fail_closed_and_pinned_actions() -> None:
                 assert re.fullmatch(r"[0-9a-f]{40}", pin), f"unpinned action: {uses}"
 
 
-def test_required_context_remains_cdb_local_ci_not_ci_job_name() -> None:
-    assert helpers.REQUIRED_CHECK_CONTEXTS == frozenset({"cdb-local-ci"})
+def test_required_context_is_ci_job_name_not_cdb_local_ci() -> None:
+    assert helpers.REQUIRED_CHECK_CONTEXTS == frozenset(
+        {CANONICAL_JOB_NAME, "policy-gate"}
+    )
     baseline = helpers.load_required_checks_baseline(helpers.REQUIRED_CHECKS_BASELINE)
-    assert baseline == ["cdb-local-ci"]
-    assert CANONICAL_JOB_NAME not in helpers.REQUIRED_CHECK_CONTEXTS
+    assert baseline == [CANONICAL_JOB_NAME, "policy-gate"]
+    assert "cdb-local-ci" not in helpers.REQUIRED_CHECK_CONTEXTS
 
 
 def test_policy_gate_remains_github_native() -> None:
@@ -124,20 +126,18 @@ def test_policy_gate_remains_github_native() -> None:
     assert "full policy-gate parity" not in content.lower()
 
 
-def test_hosted_pr_triggers_removed_when_local_fast_ci_covers() -> None:
-    """#4401: drop PR triggers for Fast-CI-covered hosted mirrors; keep policy-gate."""
-    covered_by_fast_ci = (
-        "ci.yml",
-        "docs-conflict-guard.yml",
-        "repository-canon-guard.yml",
-    )
-    for name in covered_by_fast_ci:
+def test_hosted_pr_triggers_cover_required_checks() -> None:
+    """#4540: ci.yml runs on pull_request so hosted checks gate merge; guards stay native."""
+    for name in ("ci.yml", "docs-conflict-guard.yml", "repository-canon-guard.yml"):
         triggers = helpers.extract_on_triggers(
             helpers.load_workflow_yaml(helpers.WORKFLOWS_DIR / name)
         )
-        assert "pull_request" not in triggers, name
-        assert "push" in triggers or "workflow_dispatch" in triggers
-    # CodeQL is not Fast-CI-equivalent; PR trigger removed for cost, push+schedule kept.
+        assert "workflow_dispatch" in triggers, name
+    ci = helpers.extract_on_triggers(
+        helpers.load_workflow_yaml(helpers.WORKFLOWS_DIR / "ci.yml")
+    )
+    assert "pull_request" in ci
+    # CodeQL remains push+schedule+dispatch (not Fast-CI-equivalent).
     codeql = helpers.extract_on_triggers(
         helpers.load_workflow_yaml(helpers.WORKFLOWS_DIR / "codeql-python.yml")
     )

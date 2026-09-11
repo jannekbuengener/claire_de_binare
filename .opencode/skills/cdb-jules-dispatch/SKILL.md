@@ -44,7 +44,7 @@ Persist only audit-safe metadata needed by CDB: session identifiers/state, Activ
 
 Do not persist free-form agent/user messages, bash output, raw patches, media payloads, authentication headers, secret values, or presigned URLs as durable provider evidence.
 
-Provider `COMPLETED` and a returned pull request are delivery signals only. They are never CDB PASS, `cdb-local-ci` publication, merge authority, or issue-close authority. Independent CDB validation and delivery-receipt verification still apply.
+Provider `COMPLETED` and a returned pull request are delivery signals only. They are never CDB PASS, hosted Required-Check verification, merge authority, or issue-close authority. Independent CDB validation and delivery-receipt verification still apply.
 
 ## Follow-up
 

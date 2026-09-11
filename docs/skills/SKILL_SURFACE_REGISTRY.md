@@ -160,7 +160,8 @@ python tools/validate_skill_surface_mirror.py --skill <name>
   Drift-Guard laufen lassen und Adapter nachziehen, bevor die Session als
   vollstaendig abgeschlossen gilt. Bei `DRIFT_FOUND` re-mirror im Scope oder
   dedupliziertes Re-Mirror-Follow-up-Issue anlegen (kein Auto-Merge ohne live
-  `cdb-local-ci` SUCCESS; siehe `docs/runbooks/merge_policy_ci_gate.md`).
+  hosted Required Checks (`ci (Unit/Integration + Lint gesammelt)`,
+  `policy-gate`) im Scope; siehe `docs/runbooks/merge_policy_ci_gate.md`).
 - Dokumentierte Ausnahmen (kein Drift): `cdb-onboarding` (codex-only Alias),
   `gh-fix-ci` Canon-Extras (`META.yaml`/`evals.json`/`scripts/`),
   `.claude/skills/*.skill`, `.gemini/skills/`.

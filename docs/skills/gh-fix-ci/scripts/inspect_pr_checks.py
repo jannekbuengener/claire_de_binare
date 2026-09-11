@@ -32,12 +32,13 @@ DEFAULT_LOG_LINES = 100
 MAX_LOG_LINES = 500
 RETRY_COUNT = 2
 
-# The sole live merge-relevant required context on `main` is the App-bound
-# Check Run `cdb-local-ci` (`app_id=4410232`). SSOT:
-# docs/runbooks/merge_policy_ci_gate.md. A same-named Commit Status is not
-# merge-sufficient. Hosted GitHub Actions check-runs remain
-# advisory/safety-relevant only (migration #4169) and are reported separately.
-REQUIRED_CHECKS = ["cdb-local-ci"]
+# The merge-relevant required contexts on `main` are the hosted Check Runs
+# `ci (Unit/Integration + Lint gesammelt)` and `policy-gate` (Branch
+# Protection, #4540). SSOT: docs/runbooks/merge_policy_ci_gate.md. A
+# same-named Commit Status is not merge-sufficient. `cdb-local-ci` (Local CI
+# Status Publisher, App Check Run `app_id=4410232`) is optional developer
+# preflight/diagnose and not branch-protection-required.
+REQUIRED_CHECKS = ["ci (Unit/Integration + Lint gesammelt)", "policy-gate"]
 
 # Legacy Commit Status `state` values (same name, non-sufficient) normalized
 # to Check Run-style conclusions so rollup parsing can treat both uniformly.
@@ -259,11 +260,14 @@ class PRCheckInspector:
         """Get all checks for the PR.
 
         `statusCheckRollup` mixes two GitHub object shapes:
-        - Check Run (Hosted Actions): `name` / `status` / `conclusion`.
-        - Required App Check Run (`cdb-local-ci`, `app_id=4410232`) uses Check Run `name` / `conclusion`; legacy Commit Status same name is not merge-sufficient. Rollup may still include StatusContext entries (no separate
-          status/conclusion pair). Both are normalized into `CheckResult`
-          here so downstream logic (required-check lookup, categorization)
-          does not need to special-case the required context.
+                - Check Run (Hosted Actions): `name` / `status` / `conclusion`.
+                - Required hosted Check Runs (`ci (Unit/Integration + Lint gesammelt)`,
+                  `policy-gate`) use Check Run `name` / `conclusion`; legacy Commit
+                  Status same name is not merge-sufficient. Rollup may still include
+                  StatusContext entries (no separate
+                  status/conclusion pair). Both are normalized into `CheckResult`
+                  here so downstream logic (required-check lookup, categorization)
+                  does not need to special-case the required context.
         """
         data = self.run_gh_command(
             [
@@ -567,7 +571,7 @@ def format_human_output(
     hosted_actions_failed = [c for c in failing_checks if c.name not in REQUIRED_CHECKS]
     if hosted_actions_failed:
         print(
-            f"[ADVISORY] {len(hosted_actions_failed)} Hosted Actions check(s) red (does not block merge if cdb-local-ci is SUCCESS):"
+            f"[ADVISORY] {len(hosted_actions_failed)} Hosted Actions check(s) red (does not block merge if required checks are SUCCESS):"
         )
         for check in hosted_actions_failed:
             print(f"  - {check.name}")

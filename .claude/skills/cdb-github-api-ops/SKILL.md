@@ -160,7 +160,7 @@ collection_errors:
 | Create issue/PR | Only if Plan-GO explicitly allows it |
 | Label/milestone changes | Only if Plan-GO explicitly allows it |
 | Rebase/push | Only if Plan-GO explicitly allows it |
-| Squash merge (`gh pr merge --squash --delete-branch`) | Never a Delivery Mode or Conductor action. Only `cdb_final_head_merge_executor` (Merge Agent) may execute regular merge after HEAD-bound APPROVE from `cdb_final_head_pr_approval_gate`, with Final-Head gates re-verified (`FINAL_HEAD_READY_FOR_APPROVAL`, exact head/base, App Check Run `cdb-local-ci` SUCCESS `app_id=4410232`). Read/write capability is not governance authority. `--admin` is never a substitute. |
+| Squash merge (`gh pr merge --squash --delete-branch`) | Never a Delivery Mode or Conductor action. Only `cdb_final_head_merge_executor` (Merge Agent) may execute regular merge after HEAD-bound APPROVE from `cdb_final_head_pr_approval_gate`, with Final-Head gates re-verified (`FINAL_HEAD_READY_FOR_APPROVAL`, exact head/base, hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` SUCCESS on the exact head). Read/write capability is not governance authority. `--admin` is never a substitute. |
 | GitHub APPROVE review | Only `cdb_final_head_pr_approval_gate` (PR Reviewer) on the exact final `HEAD_SHA`. Cannot merge. |
 | Repo settings/admin | Separate scope, never automatic |
 | Branch protection changes | Separate scope, never automatic |
@@ -172,8 +172,8 @@ When a write seems necessary but no approved scope exists:
 3. Propose the write as a follow-up with explicit Human-GO.
 4. Do NOT execute the write.
 
-For Final-Head readiness specifically: if Conductor cannot publish/verify
-`cdb-local-ci`, report `DONE_PR_OPEN_MERGE_HANDOFF` (Final Head not ready).
+For Final-Head readiness specifically: if Conductor cannot verify the hosted
+Required Checks, report `DONE_PR_OPEN_MERGE_HANDOFF` (Final Head not ready).
 Delivery sessions and Conductor must not execute merge.
 
 ## Hard rules

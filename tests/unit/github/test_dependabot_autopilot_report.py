@@ -59,18 +59,31 @@ def _load_policy() -> classifier.AllowlistPolicy:
 
 def _checks(
     *,
-    state: str = "success",
-    duplicate: str | None = None,
-) -> list[dict[str, str]]:
-    """Build live Commit Status entries for the `cdb-local-ci` context.
+    conclusion: str = "success",
+    duplicate_conclusion: str | None = None,
+) -> dict:
+    """Build a live Check Runs payload for the two required merge checks.
 
-    `cdb-local-ci` merge gate is an App-bound Check Run (`name`/`conclusion`, `app_id=4410232`), not a
-    hosted Actions check-run (`name`/`status`/`conclusion`).
+    Post-#4540 the merge gate is ``ci (Unit/Integration + Lint gesammelt)`` and
+    ``policy-gate``, both hosted GitHub Actions Check Runs (name/status/conclusion).
     """
-    statuses = [{"context": "cdb-local-ci", "state": state.lower()}]
-    if duplicate is not None:
-        statuses.append({"context": "cdb-local-ci", "state": duplicate.lower()})
-    return statuses
+    check_runs = [
+        {
+            "name": "ci (Unit/Integration + Lint gesammelt)",
+            "status": "completed",
+            "conclusion": conclusion,
+        },
+        {"name": "policy-gate", "status": "completed", "conclusion": conclusion},
+    ]
+    if duplicate_conclusion is not None:
+        check_runs.append(
+            {
+                "name": "ci (Unit/Integration + Lint gesammelt)",
+                "status": "completed",
+                "conclusion": duplicate_conclusion,
+            }
+        )
+    return {"check_runs": check_runs}
 
 
 def _dependabot_commit_message() -> str:
@@ -189,11 +202,11 @@ def _build_transport(
         f"repos/{REPO}/compare/{BASE_SHA}...{HEAD_SHA}": compare,
     }
     if check_runs_error is not None:
-        routes[f"repos/{REPO}/commits/{HEAD_SHA}/status"] = lambda *_args, **_kwargs: (
-            _ for _ in ()
-        ).throw(check_runs_error)
+        routes[f"repos/{REPO}/commits/{HEAD_SHA}/check-runs"] = (
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(check_runs_error)
+        )
     else:
-        routes[f"repos/{REPO}/commits/{HEAD_SHA}/status"] = check_runs
+        routes[f"repos/{REPO}/commits/{HEAD_SHA}/check-runs"] = check_runs
     return report.InMemoryGhTransport(routes)
 
 
@@ -263,12 +276,15 @@ def test_human_commit_and_behind_merge_state_hold() -> None:
 def test_missing_required_check_holds() -> None:
     outcome = _run(
         _build_transport(
-            check_runs=[
-                {
-                    "context": "unrelated-check",
-                    "state": "success",
-                }
-            ]
+            check_runs={
+                "check_runs": [
+                    {
+                        "name": "unrelated-check",
+                        "status": "completed",
+                        "conclusion": "success",
+                    }
+                ]
+            }
         )
     )
 
@@ -278,7 +294,24 @@ def test_missing_required_check_holds() -> None:
 
 
 def test_in_progress_required_check_holds() -> None:
-    outcome = _run(_build_transport(check_runs=_checks(state="pending")))
+    outcome = _run(
+        _build_transport(
+            check_runs={
+                "check_runs": [
+                    {
+                        "name": "ci (Unit/Integration + Lint gesammelt)",
+                        "status": "in_progress",
+                        "conclusion": "",
+                    },
+                    {
+                        "name": "policy-gate",
+                        "status": "completed",
+                        "conclusion": "success",
+                    },
+                ]
+            }
+        )
+    )
 
     row = outcome.rows[0]
     assert row.classification == "HOLD"
@@ -286,7 +319,7 @@ def test_in_progress_required_check_holds() -> None:
 
 
 def test_duplicate_required_check_holds() -> None:
-    outcome = _run(_build_transport(check_runs=_checks(duplicate="failure")))
+    outcome = _run(_build_transport(check_runs=_checks(duplicate_conclusion="failure")))
 
     row = outcome.rows[0]
     assert row.classification == "HOLD"
@@ -429,7 +462,7 @@ def test_multiple_open_dependabot_pulls_sorted_by_number() -> None:
             f"repos/{REPO}/pulls/4049/commits": _commits_stub(),
             f"repos/{REPO}/pulls/4049/files": _files_stub(),
             f"repos/{REPO}/compare/{BASE_SHA}...{HEAD_SHA}": _compare_stub(),
-            f"repos/{REPO}/commits/{HEAD_SHA}/status": _checks(),
+            f"repos/{REPO}/commits/{HEAD_SHA}/check-runs": _checks(),
         }
     )
     outcome = report.run_report(transport, REPO, ALLOWLIST_PATH)
@@ -442,16 +475,16 @@ def test_merge_paginated_payload_merges_two_pull_array_pages() -> None:
     assert merged == [{"number": 4048}, {"number": 4049}]
 
 
-def test_merge_paginated_payload_merges_two_statuses_object_pages() -> None:
+def test_merge_paginated_payload_merges_two_check_runs_object_pages() -> None:
     merged = report._merge_paginated_payload(
         [
-            {"statuses": [{"context": "cdb-local-ci"}]},
-            {"statuses": [{"context": "unrelated-check"}]},
+            {"check_runs": [{"name": "ci (Unit/Integration + Lint gesammelt)"}]},
+            {"check_runs": [{"name": "policy-gate"}]},
         ]
     )
     assert merged == [
-        {"context": "cdb-local-ci"},
-        {"context": "unrelated-check"},
+        {"name": "ci (Unit/Integration + Lint gesammelt)"},
+        {"name": "policy-gate"},
     ]
 
 

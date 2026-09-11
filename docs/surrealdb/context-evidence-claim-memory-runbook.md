@@ -342,7 +342,7 @@ The following actions **always require explicit human GO** regardless of trust l
 | Merge of code changes | GO MERGE |
 | Push to main | GO PUSH |
 | Issue close / comment | GO GITHUB LIVE |
-| Admin merge (`--admin`) | GO ADMIN MERGE — **never** a bypass for missing/red `cdb-local-ci`; with `enforce_admins=true` the Required Status remains mandatory |
+| Admin merge (\--admin\) | GO ADMIN MERGE - **never** a bypass for missing/red hosted Required Checks (\ci (Unit/Integration + Lint gesammelt)\, \policy-gate\); with \nforce_admins=true\ the Required Status remains mandatory |
 | Review thread resolve | GO REVIEW THREAD RESOLVE |
 | Commit | GO COMMIT |
 

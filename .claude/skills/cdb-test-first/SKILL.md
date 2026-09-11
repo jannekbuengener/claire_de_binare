@@ -231,5 +231,5 @@ Für Router- und Batch-Flow-Änderungen zuerst Schutztests formulieren:
 - **Contract-Test:** Commit Status versus Check Run sowie `gh api` Publisher.
 
 Jeder Test benennt, ob er `slice` oder `final_batch_head` schützt. Slice-Tests
-dürfen keine vollständige Fast-CI oder `cdb-local-ci` voraussetzen; der finale
-Merge-Head muss beide verlangen.
+dürfen keine vollständige Fast-CI oder hosted Required Checks voraussetzen; der
+finale Merge-Head muss beide verlangen.

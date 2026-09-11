@@ -80,15 +80,20 @@ Based on [DISCOVERY_REPORT.md](../../../docs/skills/gh-fix-ci/DISCOVERY_REPORT.m
 ## Required Checks for CDB
 
 **SSOT:** `docs/runbooks/merge_policy_ci_gate.md`.
-Live branch protection on `main` requires **exactly one** merge-relevant
-context:
+Live branch protection on `main` requires **two** merge-relevant
+contexts (both **hosted Check Runs**, #4540):
 
-- **`cdb-local-ci`** — a GitHub **App-bound Check Run** (`app_id=4410232`) published
-  by the local Fast-CI status publisher for the exact PR head SHA. Verify
-  live with `gh api`, not from any hardcoded list (including this one).
+- **`ci (Unit/Integration + Lint gesammelt)`** — hosted GitHub Actions
+  run for the exact PR head SHA.
+- **`policy-gate`** — hosted policy-gate Check Run for the exact PR head SHA.
 
-Since migration #4169, hosted GitHub Actions check-runs — `ci (Unit/Integration + Lint gesammelt)`,
-`validate-branch-name`, `gitleaks (Secrets-Alarm)`, `trivy (kritische CVEs/Supply-Chain)`,
+Verify live with `gh api`, not from any hardcoded list (including this one).
+A same-named Commit Status is not merge-sufficient.
+
+`cdb-local-ci` (Local CI Status Publisher, App Check Run `app_id=4410232`) is
+seit #4540 optionaler Developer-Preflight/Diagnose und kein
+branch-protection-required Context. Remaining hosted check-runs — `validate-branch-name`,
+`gitleaks (Secrets-Alarm)`, `trivy (kritische CVEs/Supply-Chain)`,
 `Check Core Duplicates`, `Check Delivery Gate`, `guard`, `E2E Happy Path`, and
 similar — are **advisory/safety-relevant only**. They remain useful signal
 (lint, tests, security, governance, E2E) and should be inspected and fixed
@@ -97,23 +102,24 @@ to be "8/8 present" for merge eligibility.
 
 ### Failure classification (used by this skill)
 
-- `MERGE_READY` — `cdb-local-ci` App Check Run SUCCESS (`app_id=4410232`) on
-  the exact PR head SHA. Means Final-Head CI readiness only — **not** merge
-  authority and **not** APPROVE. Hosted Actions findings remain advisory.
-- `REQUIRED_STATUS_MISSING` — `cdb-local-ci` absent or stale for the exact
-  head SHA. Not merge-eligible; needs a local Fast-CI run + publish, or a
-  capable session to do so.
-- `CODE_FAILURE` — a check (local Fast-CI stage or Hosted Actions job) fails
+- `MERGE_READY` — hosted Required Checks `ci (Unit/Integration + Lint gesammelt)`
+  and `policy-gate` are SUCCESS on the exact PR head SHA. Means Final-Head CI
+  readiness only — **not** merge authority and **not** APPROVE. Other Hosted
+  Actions findings remain advisory.
+- `REQUIRED_STATUS_MISSING` — one/both Required Checks absent or stale for
+  the exact head SHA. Not merge-eligible; needs a fresh hosted run on the
+  head SHA.
+- `CODE_FAILURE` — a check (hosted Required Check or advisory job) fails
   due to an actual code/test/lint/type issue. Fixable in-repo.
   `--check` name filtering (e.g. `--check "ci (Unit"`) still works for
   Hosted Actions advisory triage.
 - `HOSTED_ACTIONS_INFRA_BLOCK` — Hosted Actions run is red/blocked due to
   billing, runner lock, `action_required` approval gate, or similar
   infrastructure condition unrelated to code correctness. Report distinctly
-  from `CODE_FAILURE`; does not block merge if `cdb-local-ci` is SUCCESS.
-- `AUTH_PUBLISHER_BLOCK` — the session cannot read/verify `cdb-local-ci` or
-  (if attempting to publish) cannot authenticate with sufficient scope. See
-  Auth Preflight below.
+  from `CODE_FAILURE`; does not block merge if Required Checks are SUCCESS.
+- `AUTH_PUBLISHER_BLOCK` — the session cannot read/verify the Required
+  Checks or (if attempting to publish) cannot authenticate with sufficient
+  scope. See Auth Preflight below.
 
 ### Conditional Checks
 
@@ -122,7 +128,7 @@ path filters:
 
 - **E2E Happy Path**: Ergänzender E2E-Workflow; kein branch-protected Required Check.
 - The script reports these as "not triggered" rather than failures.
-- Output format: `[OK] Hosted Actions advisory checks: 7/7 present, 1 not triggered (cdb-local-ci: SUCCESS)`
+- Output format: `[OK] Hosted Actions advisory checks: 7/7 present, 1 not triggered (2 required checks SUCCESS)`
 
 ### Auth Preflight
 
@@ -131,12 +137,12 @@ read live status:
 
 1. `gh auth status` — confirm an authenticated identity.
 2. `gh api repos/<owner>/<repo>/commits/<head_sha>/check-runs` — confirm
-   App-bound Check Run `cdb-local-ci` (`app_id=4410232`) is readable for the
-   exact PR head SHA. A same-named Commit Status via `/status` is not
+   the hosted Required Checks are readable for the exact PR head SHA.
+   A same-named Commit Status via `/status` is not
    sufficient (billing/lock on Hosted Actions does not affect this read).
 3. If step 2 fails with an auth/permission error, classify as
    `AUTH_PUBLISHER_BLOCK`, not `REQUIRED_STATUS_MISSING` — these have
-   different remediations (fix auth vs. run+publish local CI).
+   different remediations (fix auth vs. get a fresh hosted run on the head).
 
 Fixing a red check never authorizes Approval or Merge. After any commit
 produced by a CI fix, stale Final-Head Evidence and Approval are invalid.
@@ -204,21 +210,21 @@ Failing Checks (2/15):
 PR #807: jannekbuengener/Claire_de_Binare
 Status: 13 passed, 0 failed, 2 in_progress
 
-[OK] Required merge context is SUCCESS: MERGE_READY (1/1)
+[OK] Required merge context is SUCCESS: MERGE_READY (2/2)
 
-[ADVISORY] 1 Hosted Actions check(s) red (does not block merge if cdb-local-ci is SUCCESS):
+[ADVISORY] 1 Hosted Actions check(s) red (does not block merge if required checks are SUCCESS):
   - trivy (kritische CVEs/Supply-Chain)
 ```
 
 Missing/red required context is reported instead as:
 ```
 [FAIL] Required merge context missing on this head SHA: REQUIRED_STATUS_MISSING
-   Missing: cdb-local-ci
+   Missing: ci (Unit/Integration + Lint gesammelt), policy-gate
 ```
 or
 ```
-[FAIL] Required merge context failed/red (1/1): BLOCKED_REQUIRED_STATUS
-  - cdb-local-ci
+[FAIL] Required merge context failed/red (1/2): BLOCKED_REQUIRED_STATUS
+  - policy-gate
 ```
 
 ### JSON Output (with `--json`)
@@ -233,7 +239,8 @@ or
     "in_progress": 2,
     "skipped": 0,
     "required_checks_status": {
-      "cdb-local-ci": "SUCCESS"
+      "ci (Unit/Integration + Lint gesammelt)": "SUCCESS",
+      "policy-gate": "SUCCESS"
     }
   },
   "failing_checks": []

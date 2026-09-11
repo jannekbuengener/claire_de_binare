@@ -185,7 +185,7 @@ Establish a verified, fail-closed starting state before any repo work begins.
      delivery session ends when the issue is delivered into the routed PR;
      PR and issue both stay open.
    - A delivery session never plans a merge, approve, a full final-head
-     Fast-CI, a `cdb-local-ci` publish, an acceptance-chain run
+     Fast-CI, a hosted Required-Check verification, an acceptance-chain run
      (`cdb-integration-wiring-audit`, `cdb-pr-gap-classifier`,
      `cdb-pr-completeness-review`, `cdb-batch-merge-conductor`), or an issue
      closure.      Those belong to a separately started merge session covering Final-Head
