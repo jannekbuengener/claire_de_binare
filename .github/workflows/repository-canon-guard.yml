@@ -1,7 +1,8 @@
 name: Repository Canon Guard
 
-# #4401: PR trigger removed — equivalent coverage is in local Fast-CI docs stage
-# (`python -m tools.ci.repository_canon_guard` via ci/stages/docs.py → cdb-local-ci).
+# #4540: PR coverage is in the hosted fast profile (ci.yml pipeline, docs stage:
+# `python -m tools.ci.repository_canon_guard` via ci/stages/docs.py). No separate
+# PR trigger — the required gate `ci (Unit/Integration + Lint gesammelt)` runs it.
 # Retained: push-to-main (post-squash tip) + manual dispatch.
 on:
   push:

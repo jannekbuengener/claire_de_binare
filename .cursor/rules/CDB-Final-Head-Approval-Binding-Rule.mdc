@@ -21,7 +21,8 @@ No APPROVE when exit != 0 or recommendation != `APPROVE_RECOMMENDED`.
 
 - Draft PR or `accepting_slices`
 - No schema-validated Conductor handoff bound to current HEAD
-- Missing `cdb-local-ci` App Check Run SUCCESS (`app_id=4410232`) on exact HEAD
+- Missing hosted Required Check SUCCESS (`ci (Unit/Integration + Lint gesammelt)`,
+  `policy-gate`) on exact HEAD
 - Empty review body
 
 ## Roles

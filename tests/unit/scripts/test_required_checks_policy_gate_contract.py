@@ -12,22 +12,23 @@ from tests.unit.scripts import _workflow_contract_helpers as helpers
 pytestmark = [pytest.mark.unit, pytest.mark.contract]
 
 
-def test_required_checks_baseline_matches_cdb_local_ci() -> None:
+def test_required_checks_baseline_matches_hosted_contexts() -> None:
     contexts = helpers.load_required_checks_baseline(helpers.REQUIRED_CHECKS_BASELINE)
     assert set(contexts) == helpers.REQUIRED_CHECK_CONTEXTS
-    assert contexts == ["cdb-local-ci"]
+    assert contexts == ["ci (Unit/Integration + Lint gesammelt)", "policy-gate"]
 
 
-def test_app_check_run_contexts_contain_cdb_local_ci() -> None:
+def test_no_app_check_run_contexts_remain() -> None:
     check_runs = helpers.load_commit_status_contexts(helpers.REQUIRED_CHECKS_BASELINE)
-    assert "cdb-local-ci" in check_runs
-    assert set(check_runs) <= helpers.REQUIRED_CHECK_CONTEXTS
+    assert check_runs == []
+    assert "cdb-local-ci" not in helpers.REQUIRED_CHECK_CONTEXTS
 
 
-def test_workflow_mapping_need_not_include_cdb_local_ci() -> None:
+def test_workflow_mapping_covers_all_required_contexts() -> None:
     mapping, parse_errors = derive_context_mapping(helpers.WORKFLOWS_DIR)
     assert parse_errors == []
-    # App Check Run (#4170): not a workflow job name.
+    for context in helpers.REQUIRED_CHECK_CONTEXTS:
+        assert context in mapping, f"required context not derivable: {context}"
     assert "cdb-local-ci" not in mapping
 
 
@@ -37,8 +38,8 @@ def test_policy_gate_blocks_pull_request_target_in_source() -> None:
     assert "failures.push" in content or "failures.push(" in content
 
 
-def test_policy_gate_workflow_still_publishes_named_job() -> None:
-    """policy-gate.yml remains valuable workflow content (not a BP required context)."""
+def test_hosted_required_checks_published_by_named_jobs() -> None:
+    """The required contexts are hosted Check Runs named after workflow jobs."""
     mapping, _ = derive_context_mapping(helpers.WORKFLOWS_DIR)
     assert "policy-gate" in mapping
     sources = {
@@ -48,13 +49,13 @@ def test_policy_gate_workflow_still_publishes_named_job() -> None:
     assert any(path.endswith("/.github/workflows/policy-gate.yml") for path in sources)
 
 
-def test_required_checks_audit_lists_cdb_local_ci() -> None:
+def test_required_checks_audit_lists_hosted_check_names() -> None:
     content = (helpers.WORKFLOWS_DIR / "required-checks-audit.yml").read_text(
         encoding="utf-8"
     )
     for context in helpers.REQUIRED_CHECK_CONTEXTS:
         assert context in content
-    assert "ci (Unit/Integration + Lint gesammelt)" not in content
+    assert "cdb-local-ci" not in content
 
 
 def test_docs_guards_are_non_required() -> None:
@@ -80,8 +81,10 @@ def test_drift_report_and_baseline_metadata_exist() -> None:
     )
     report_text = report.read_text(encoding="utf-8")
     assert "## Required Contexts (Baseline)" in report_text
-    assert "cdb-local-ci" in report_text
+    assert "ci (Unit/Integration + Lint gesammelt)" in report_text
+    assert "policy-gate" in report_text
+    assert "cdb-local-ci" not in report_text
     payload = json.loads(helpers.REQUIRED_CHECKS_BASELINE.read_text(encoding="utf-8"))
     assert payload.get("source") == "branch_protection_main"
-    assert payload.get("required_app_id") == 4410232
-    assert "cdb-local-ci" in (payload.get("check_run_contexts") or [])
+    assert payload.get("required_app_id") is None
+    assert (payload.get("check_run_contexts") or []) == []

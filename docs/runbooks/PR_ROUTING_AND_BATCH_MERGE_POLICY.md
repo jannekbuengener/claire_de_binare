@@ -225,8 +225,8 @@ Pipeline-SSOT: `docs/contracts/final_head_merge_pipeline.v1.md`.
 5. Kombinierten Diff reviewen.
 6. Vollständige Fast-CI auf exakt dem finalen Head.
 7. Policy-Gate-Mirror und Publisher-Dry-run.
-8. `cdb-local-ci` als App-gebundenen Check Run (`app_id=4410232`) via Publisher
-   und `gh api …/check-runs` auf exakt diesem SHA verifizieren.
+8. Hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate`
+   via `gh api ./check-runs` auf exakt diesem SHA verifizieren.
 9. Head-/Base-Drift erneut prüfen; Drift invalidiert alle Final-Evidence und
    jedes Approval.
 10. Conductor endet bei `FINAL_HEAD_READY_FOR_APPROVAL` und übergibt an

@@ -388,11 +388,11 @@ def test_approval_head_drift_blocks_via_detect() -> None:
             "pr": {"number": PR, "head_sha": HEAD, "base_sha": BASE},
             "checks": [
                 {
-                    "name": "cdb-local-ci",
+                    "name": "ci (Unit/Integration + Lint gesammelt)",
                     "mechanism": "check_run",
                     "status": "completed",
                     "conclusion": "success",
-                    "app_id": 4410232,
+                    "app_id": None,
                     "source_sha": "cccccccccccccccccccccccccccccccccccccccc",
                 }
             ],

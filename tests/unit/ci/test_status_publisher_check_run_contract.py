@@ -23,17 +23,26 @@ PERMISSION_DOC_MARKERS = (
 )
 
 
-def test_branch_protection_baselines_unchanged_for_code_pr():
+def test_branch_protection_baselines_reflect_hosted_required_checks():
     bp = json.loads(BASELINE_BP.read_text(encoding="utf-8"))
     checks = bp["required_status_checks"]["checks"]
-    assert checks == [{"app_id": 4410232, "context": "cdb-local-ci"}]
-    assert bp["required_status_checks"]["contexts"] == ["cdb-local-ci"]
+    assert checks == [
+        {"context": "ci (Unit/Integration + Lint gesammelt)"},
+        {"context": "policy-gate"},
+    ]
+    assert bp["required_status_checks"]["contexts"] == [
+        "ci (Unit/Integration + Lint gesammelt)",
+        "policy-gate",
+    ]
     assert bp["required_status_checks"]["strict"] is True
 
     ctx = json.loads(BASELINE_CTX.read_text(encoding="utf-8"))
-    assert ctx["contexts"] == ["cdb-local-ci"]
-    assert ctx.get("required_app_id") == 4410232
-    assert "cdb-local-ci" in ctx.get("check_run_contexts", ctx["contexts"])
+    assert sorted(ctx["contexts"]) == [
+        "ci (Unit/Integration + Lint gesammelt)",
+        "policy-gate",
+    ]
+    assert ctx.get("required_app_id") is None
+    assert ctx.get("check_run_contexts") == []
 
 
 def test_no_private_key_or_token_examples_in_publisher_tree():
@@ -99,12 +108,13 @@ def test_publisher_has_no_branch_protection_write_api():
     assert "required_pull_request_reviews" not in blob
 
 
-def test_no_heavy_ci_restore_in_publisher_slice():
-    # This PR must not re-enable hosted heavy CI as required context.
+def test_required_checks_are_hosted_not_local():
+    # Post-#4540: required contexts are the two hosted job names, not cdb-local-ci.
     bp = json.loads(BASELINE_BP.read_text(encoding="utf-8"))
     contexts = bp["required_status_checks"]["contexts"]
-    assert "ci (Unit/Integration + Lint gesammelt)" not in contexts
-    assert contexts == ["cdb-local-ci"]
+    assert "ci (Unit/Integration + Lint gesammelt)" in contexts
+    assert "policy-gate" in contexts
+    assert "cdb-local-ci" not in contexts
 
 
 def test_check_run_mode_is_default_backend():

@@ -64,8 +64,11 @@ def test_live_snapshot_adapter_uses_observed_capability_fingerprint() -> None:
     }
     protection_payload = {
         "required_status_checks": {
-            "contexts": ["cdb-local-ci"],
-            "checks": [{"context": "cdb-local-ci", "app_id": 4410232}],
+            "contexts": ["ci (Unit/Integration + Lint gesammelt)", "policy-gate"],
+            "checks": [
+                {"context": "ci (Unit/Integration + Lint gesammelt)"},
+                {"context": "policy-gate"},
+            ],
         }
     }
     with (

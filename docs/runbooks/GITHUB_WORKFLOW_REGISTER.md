@@ -1,7 +1,7 @@
 # GitHub Workflow Register
 
 **Repo:** Claire de Binare  
-**Stand:** 2026-08-07 (#4401 hosted-PR trigger reduction)
+**Stand:** 2026-09-11 (#4540 hosted Required Checks)
 **Workflow-Dateien:** 57  
 **Entfernungs-Scope:** 13 Workflow-Dateien plus 5 exklusive Support-Dateien  
 **Daten-Datei im Workflow-Ordner:** `labels.json` (kein Workflow)
@@ -21,26 +21,27 @@ historischen Evidence- und Session-Unterlagen erwähnt.
 
 ## Merge-relevante Checks
 
-SSOT: [`merge_policy_ci_gate.md`](merge_policy_ci_gate.md). Der einzige
-merge-relevante Required Context auf `main` ist `cdb-local-ci` (Commit
-Status, lokaler Publisher), live verifizierbar via `gh api`, nicht aus
+SSOT: [`merge_policy_ci_gate.md`](merge_policy_ci_gate.md). Die merge-relevanten
+Required Contexts auf `main` sind die hosted Check Runs `ci (Unit/Integration +
+Lint gesammelt)` und `policy-gate`, live verifizierbar via `gh api`, nicht aus
 dieser Tabelle.
 
 | Quelle | Check-Kontext | Typ |
 |---|---|---|
-| Local CI Status Publisher | `cdb-local-ci` | App Check Run (`app_id=4410232`) |
+| `ci.yml` (Job `ci`) | `ci (Unit/Integration + Lint gesammelt)` | Hosted Check Run (GitHub Actions) |
+| `policy-gate.yml` (Job `policy-gate`) | `policy-gate` | Hosted Check Run (GitHub Actions) |
 
 | Workflow | Rolle |
 |---|---|
-| `ci.yml` | Hosted Actions, advisory; post-merge/manual mirror (#4401, nicht PR) |
-| `policy-gate.yml` | Hosted Actions, advisory lightweight PR policy gate |
+| `ci.yml` | Hosted Actions, Required Check `ci (Unit/Integration + Lint gesammelt)`, `pull_request` (main), push, workflow_dispatch (#4540) |
+| `policy-gate.yml` | Hosted Actions, Required Check `policy-gate` (PR Safety-Gate) |
 
-`ci.yml` und `policy-gate.yml` sind seit Migration #4169 keine
-Branch-Protection-Required-Checks mehr. Ab #4401 startet die breite
-hosted Fast-CI (`ci.yml`) nicht mehr auf jedem PR — Final-Head-Evidence
-kommt aus lokaler Fast-CI + App Check Run `cdb-local-ci`. Andere Workflows
-liefern ergänzende Prüfungen, Reports oder Automatisierung, ersetzen aber
-ebenfalls nicht `cdb-local-ci`.
+Seit #4540 sind `ci (Unit/Integration + Lint gesammelt)` und `policy-gate`
+Branch-Protection-Required-Checks. `cdb-local-ci` (Local CI Status Publisher,
+App Check Run `app_id=4410232`) ist seit #4540 **kein** Required Context mehr,
+sondern optionaler Developer-Preflight/Diagnose. Andere Workflows liefern
+ergänzende Prüfungen, Reports oder Automatisierung, ersetzen aber die hosted
+Required Checks nicht.
 
 ## Vollständiges Inventar
 
@@ -61,7 +62,7 @@ ebenfalls nicht `cdb-local-ci`.
 | `cdb-dependabot-autopilot.yml` | aktiv | schedule, workflow_dispatch | read-only | low |
 | `cdb-post-merge-followup-scanner.yml` | aktiv | pull_request, workflow_dispatch | issues:write | medium |
 | `cdb-weekly-control-hygiene-classifier.yml` | aktiv | schedule, workflow_dispatch | issues:write | medium |
-| `ci.yml` | aktiv | push, workflow_dispatch | read-only | low |
+| `ci.yml` | aktiv | push, pull_request (main), workflow_dispatch | read-only | low |
 | `codeql-python.yml` | aktiv | push, schedule, workflow_dispatch | read-only | low |
 | `contracts.yml` | aktiv | push, schedule, workflow_dispatch | read-only | low |
 | `control_board_upsert.yml` | aktiv | schedule, workflow_dispatch | read-only | low |

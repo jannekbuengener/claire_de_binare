@@ -74,13 +74,12 @@ def test_cdb_local_ci_not_commit_status_in_active_merge_canon() -> None:
     merge_gate = MERGE_GATE.read_text(encoding="utf-8")
     ci_readme = CI_README.read_text(encoding="utf-8")
     checks = CHECKS_RULE.read_text(encoding="utf-8")
-    assert "App **Check Run**" in merge_gate or "App Check Run" in merge_gate
-    assert "4410232" in merge_gate
-    assert "Commit Status ist wirkungslos" in merge_gate or (
-        "Commit Status" in merge_gate and "zählt nicht" in merge_gate
-    )
+    # Post-#4540: hosted required checks are primary; cdb-local-ci is optional preflight
+    assert "ci (Unit/Integration + Lint gesammelt)" in merge_gate
+    assert "policy-gate" in merge_gate
+    assert "hosted Required" in merge_gate or "hosted Check Run" in merge_gate
+    assert "optionaler" in merge_gate or "optional" in merge_gate.lower()
     assert "Default-Pfad bleiben Commit Status" not in ci_readme
-    assert "App Check Run" in ci_readme
     assert "capability-based autonomous merge that bypasses" in checks.lower() or (
         "bypass" in checks.lower() and "Merge Agent" in checks
     )

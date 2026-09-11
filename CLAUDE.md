@@ -41,8 +41,8 @@ The authoritative role definition for Claude is at `agents/roles/CLAUDE.md`. Rea
 
 **PR-Flow v1:** Normale Sessions liefern targeted-validierte Slices in den
 gerouteten PR und enden mit `DONE_SLICE_ADDED_TO_BATCH_PR`. Full Fast-CI,
-`cdb-local-ci`, Merge und Issue-Closure gelten nur für einen eingefrorenen
-finalen `merge_candidate`.
+hosted Required Checks, Merge und Issue-Closure gelten nur für einen
+eingefrorenen finalen `merge_candidate`.
 
 ---
 
@@ -198,13 +198,13 @@ Coverage target: 80% on `core/` and `services/` (enforced by `make test-coverage
 
 ### CI / Branch Protection
 
-- Required merge context (SSOT: `docs/runbooks/merge_policy_ci_gate.md`, verify live via `gh api`): `cdb-local-ci` (App-bound Check Run `app_id=4410232`, exact PR head SHA) — the only branch-protection-required context on `main`.
-- `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` (Hosted Actions) remain advisory/safety-relevant but are not branch-protection-required since migration #4169.
+- Required merge contexts (SSOT: `docs/runbooks/merge_policy_ci_gate.md`, verify live via `gh api`): hosted Check Runs `ci (Unit/Integration + Lint gesammelt)` and `policy-gate` (exact PR head SHA) — the only branch-protection-required contexts on `main` since #4540.
+- `cdb-local-ci` (local Fast-CI publisher) is seit #4540 kein Required Context mehr; optionaler lokaler Preflight/Diagnose nur.
 - `policy-gate` categorizes PRs; core/service PRs need label `allow-core-change` or `manual-approval`
 - `strict: true` — branch must be up-to-date with main before merge
 - Bot review threads (Sourcery, Copilot) must be resolved before merge
 - Runner: `ci.yml` runs on `ubuntu-latest` (GitHub-hosted); self-hosted runners decommissioned from active CI per #3575; historical labels defined in `infrastructure/actions-runner/`
-- Autonomous squash merge is capability-based (see `.cursor/rules/CDB-Checks-and-Merge-Rule.mdc`): allowed once `cdb-local-ci` SUCCESS is proven live on the exact PR head SHA; `--admin` is never a substitute for a missing/red required status.
+- Autonomous squash merge is capability-based (see `.cursor/rules/CDB-Checks-and-Merge-Rule.mdc`): allowed once the hosted Required Checks (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`) are SUCCESS live on the exact PR head SHA; `--admin` is never a substitute for a missing/red required status.
 
 ### Key Governance Files
 

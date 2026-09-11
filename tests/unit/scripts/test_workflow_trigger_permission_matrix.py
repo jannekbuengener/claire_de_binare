@@ -37,7 +37,7 @@ def test_trigger_matrix_is_complete() -> None:
 @pytest.mark.parametrize(
     "filename,expected_triggers",
     [
-        ("ci.yml", ("push", "workflow_dispatch")),
+        ("ci.yml", ("pull_request", "push", "workflow_dispatch")),
         ("policy-gate.yml", ("pull_request",)),
         ("docs-conflict-guard.yml", ("push", "workflow_dispatch")),
         ("repository-canon-guard.yml", ("push", "workflow_dispatch")),

@@ -1,12 +1,12 @@
 # Required Check Contexts Drift Report (main)
 
-Timestamp (Europe/Berlin): `2026-07-27T22:36:01+02:00`  
-Timestamp (UTC): `2026-07-27T20:36:01Z`  
+Timestamp (Europe/Berlin): `2026-09-11T15:07:22+02:00`  
+Timestamp (UTC): `2026-09-11T13:07:22Z`  
 State: **NO DRIFT**
 
 ## Hashes (SHA256)
 
-- Baseline SHA256: `cb3d540d7c614797bf17ea0a5af536c484e260649b0279d6788a6963d9057453`
+- Baseline SHA256: `756596fdc8414ab1053d03395e2edde1178f7a67925d14ee89f8f1d627aa51be`
 - Current-derived SHA256: `76106943c0d48a1baf6481137d69719dec9ae5d4e1ad23b0216774db54bdde5b`
 
 ## Inputs
@@ -16,11 +16,12 @@ State: **NO DRIFT**
 
 ## Required Contexts (Baseline)
 
-- `cdb-local-ci`
+- `ci (Unit/Integration + Lint gesammelt)`
+- `policy-gate`
 
-## App Check Run / External Contexts (not workflow jobs)
+## Commit Status / External Contexts (not workflow jobs)
 
-- `cdb-local-ci` (`app_id=4410232`, post-#4170 Phase D)
+- none
 
 ## Missing Required Contexts
 
@@ -54,7 +55,6 @@ State: **NO DRIFT**
 - `backfill`
 - `build`
 - `capture-intent`
-- `ci (Unit/Integration + Lint gesammelt)`
 - `classify`
 - `comment-epic`
 - `context-refresh`
@@ -74,7 +74,6 @@ State: **NO DRIFT**
 - `opencode`
 - `performance-check`
 - `persist-via-pr`
-- `policy-gate`
 - `reconcile-project-board`
 - `required-checks-audit (Sentinel)`
 - `root-session-hygiene-warning`
@@ -107,7 +106,8 @@ State: **NO DRIFT**
 
 | context | status | workflow_file | job_id | job_name | workflow_name |
 |---|---|---|---|---|---|
-| `cdb-local-ci` | external/app-check-run | n/a | n/a | n/a | n/a |
+| `ci (Unit/Integration + Lint gesammelt)` | present | `.github/workflows/ci.yml` | `ci` | `ci (Unit/Integration + Lint gesammelt)` | `ci` |
+| `policy-gate` | present | `.github/workflows/policy-gate.yml` | `policy-gate` | `policy-gate` | `Policy Gate` |
 
 ## Parse Errors
 
@@ -115,4 +115,4 @@ State: **NO DRIFT**
 
 ## What To Do
 
-- Required contexts are covered by Commit Status / external contexts and/or workflow job names. Keep publisher and branch-protection names aligned for commit-status contexts.
+- Required contexts are currently derivable from workflow job names or declared as commit-status/external. Keep job-name stability for workflow-backed required contexts.

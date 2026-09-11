@@ -212,7 +212,7 @@ Handoff requires matching UNLOCK events on Issue and PR:
 4. Only one writer may modify a batch PR at a time.
 5. Session Close defaults to targeted Slice Validation and
    `DONE_SLICE_ADDED_TO_BATCH_PR`, without merge or Issue close.
-6. Full Fast-CI and `cdb-local-ci` belong only to a frozen final merge head.
+6. Full Fast-CI and hosted Required-Check verification belong only to a frozen final merge head.
 7. Lock violation detected → `STOP: lock violation avoided. Detected LOCK by <X>. No changes made.`
 
 Until Jannek GO + session-start + valid LOCK (when issue-scoped), remain read-only

@@ -1,12 +1,15 @@
-# Hosted Fast-CI mirror (advisory; not BP-required).
-# PR-path duplication removed in #4401: Final-Head evidence is local
-# `python ci/scripts/run.py --profile fast` published as App Check Run
-# `cdb-local-ci` (`app_id=4410232`). See merge_policy_ci_gate.md.
-# Retained: push-to-main (post-squash tip differs from PR head) + manual dispatch.
+# Hosted GitHub Actions CI (merge-relevant on `main`, #4540).
+# PR-path re-enabled (removed in #4401): `ci (Unit/Integration + Lint gesammelt)`
+# is again a branch-protection-required Check Run on pull_request branches [main].
+# Local Fast-CI (`python ci/scripts/run.py --profile fast`) remains a developer
+# preflight / diagnosis / optional evidence publisher — no longer a required
+# context after #4540. See docs/runbooks/merge_policy_ci_gate.md.
 # This workflow is not the Docker CI lab baseline; 431B baseline is base.yml + test.yml.
 name: ci
 
 on:
+  pull_request:
+    branches: [ main ]
   push:
     branches: [ main ]
     paths:
@@ -37,6 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
       (github.event_name == 'push' &&
        contains(toJSON(github.event.commits.*.modified), 'infrastructure/surrealdb/'))
     steps:
@@ -52,7 +56,7 @@ jobs:
           /tmp/surreal validate "${{ github.workspace }}/infrastructure/surrealdb/context_intelligence_v0.surql"
 
   ci:
-    # Stable check-run name (workflow safety surface; not BP-required after #4169).
+    # Stable check-run name (branch-protection-required on `main` after #4540).
     name: ci (Unit/Integration + Lint gesammelt)
     runs-on: ubuntu-latest
 
@@ -96,7 +100,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: cdb-local-ci-fast-${{ github.sha }}
+          name: ci-fast-${{ github.sha }}
           path: ci/artifacts/
           if-no-files-found: warn
           retention-days: 7

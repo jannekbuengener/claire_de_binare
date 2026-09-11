@@ -153,11 +153,11 @@ Für jede Komponente gilt genau eine primäre Verantwortung. Spalten:
 | **Dispatcher** | Run-Start und erlaubte Lifecycle-Übergänge | Provider-Dispatch gemäß Contract + Route + Environment | Preflight (Contract/Route/Env) | HOLD/BLOCKED/FAILED bei Preflight- oder Lauf-Fehler | Merge, Approval ersetzen, Final-CI vortäuschen |
 | **Provider Adapter** | Provider-spezifische Aufrufabbildung | Provider-API/CLI/SDK laut öffentlicher Capability | Capability Probe / Drift gegen Registry | STOP wenn Capability fehlt oder Drift kritisch | Private API / UI-Scraping als Kern; Merge; Secrets speichern |
 | **Cursor** | nichts in CDB-Authority | Zugewiesene Delivery-Arbeit im Provider-Environment | Provider-lokale Logs/Status an Adapter | Provider-seitiger Abbruch melden | Merge, `cdb-local-ci`, Issue-Close, Live-Go, Governance-Override |
-| **PR Reviewer (`cdb_final_head_pr_approval_gate`)** | GitHub APPROVE gebunden an exakten Final-Head SHA | APPROVE-Review gemäß Final-Head Pipeline | Diff/Evidence/`cdb-local-ci` Check Run gegen Contract und Safety | HOLD bei Policy-/Safety-/Drift-Findings | Merge, Code ändern, Final-CI publishen, Branch Protection, Live-Go |
+| **PR Reviewer (`cdb_final_head_pr_approval_gate`)** | GitHub APPROVE gebunden an exakten Final-Head SHA | APPROVE-Review gemäß Final-Head Pipeline | Diff/Evidence/hosted Required Checks gegen Contract und Safety | HOLD bei Policy-/Safety-/Drift-Findings | Merge, Code ändern, Final-CI publishen, Branch Protection, Live-Go |
 | **Agent Run Evidence** | nichts | Evidence-Bundle schreiben (Schema später `#4256`) | Vollständigkeit/Integrität des Run-Bundles | BLOCKED bei fehlender Pflicht-Evidence | Brain-Evidence ersetzen; Final-CI vortäuschen; Merge |
-| **Final CI / `cdb-local-ci`** | Merge-relevante App-Check-Run-Wahrheit (`cdb-local-ci`, `app_id=4410232`) auf exaktem Head; SSOT [`docs/runbooks/merge_policy_ci_gate.md`](../../docs/runbooks/merge_policy_ci_gate.md) | Check-Run-Publish nur durch autorisierten Publisher (Legacy Commit Status erfüllt Branch Protection nicht) | Fast-CI/Evidence-Bindung an Head SHA | BLOCKED_REQUIRED_STATUS bei missing/red/stale | Slice-Validation als Final-CI zählen; Admin-Bypass; gleichnamigen Commit Status als Merge-Gate zählen |
+| **Final CI / hosted Required Checks** | Merge-relevante Check-Run-Wahrheit: `ci (Unit/Integration + Lint gesammelt)` + `policy-gate` (GitHub-hosted, exakter Head); SSOT [`docs/runbooks/merge_policy_ci_gate.md`](../../docs/runbooks/merge_policy_ci_gate.md) | Publish nur durch `ci.yml`/`policy-gate.yml` (Hosted GitHub Actions) | Fast-CI/Evidence-Bindung an Head SHA | BLOCKED_REQUIRED_STATUS bei missing/red/stale | Slice-Validation als Final-CI zählen; Admin-Bypass; lokalen `cdb-local-ci` Preflight als Merge-Gate zählen |
 | **Completeness Review** | `MERGE_CANDIDATE` / Nicht-Kandidat (read-only Aggregat) | nichts | Acht Dimensionen der PR-Completeness | HOLD bei Lücken/Scope-/Wiring-Findings | Merge ausführen; Delivery-Session ersetzen |
-| **Batch Merge Conductor** | Freeze, Final-Validation-Orchestrierung, `FINAL_HEAD_READY_FOR_APPROVAL` | Freeze, Rebase/Integrate nach Canon, `cdb-local-ci` Publish/Verify | Final-Head-Evidence, Main-Drift | HOLD bei Drift/Capability-/Gate-Fehlern | APPROVE; Merge; Delivery-Slice mergen ohne Freeze; `--admin`; Fake-Green |
+| **Batch Merge Conductor** | Freeze, Final-Validation-Orchestrierung, `FINAL_HEAD_READY_FOR_APPROVAL` | Freeze, Rebase/Integrate nach Canon, hosted Required Checks verifizieren | Final-Head-Evidence, Main-Drift | HOLD bei Drift/Capability-/Gate-Fehlern | APPROVE; Merge; Delivery-Slice mergen ohne Freeze; `--admin`; Fake-Green |
 | **Merge Agent (`cdb_final_head_merge_executor`)** | Regular Merge nach HEAD-gebundenem APPROVE | `gh pr merge --squash --delete-branch` nach Re-Verify | Approval-HEAD, Drift, required Check Run, Mergeability | HOLD/Re-Review bei Drift/stale Approval | APPROVE; Code ändern; `--admin`; Fake-Green |
 
 ### 4.1 Kurzform Authority
@@ -168,7 +168,8 @@ Für jede Komponente gilt genau eine primäre Verantwortung. Spalten:
 - **PR Reviewer APPROVE ≠ Mergefreigabe durch Conductor/Delivery.**
 - **Delivery-Agenten und Conductor dürfen nicht mergen.** Nur
   `cdb_final_head_merge_executor` mergt.
-- **`cdb-local-ci` bleibt der einzige merge-relevante Required Context**
+- **Hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate`
+  bleiben die merge-relevanten Required Contexts**
   (SSOT: [`docs/runbooks/merge_policy_ci_gate.md`](../../docs/runbooks/merge_policy_ci_gate.md)).
 
 ## 5. Governed Run Lifecycle
@@ -251,7 +252,8 @@ Regeln:
 1. Brain Evidence ist Kontext-Evidence und autorisiert keine Writes.
 2. Agent Run Evidence ist Ausführungsevidence und ersetzt keine Final-CI.
 3. Targeted Slice Validation ist kein Final-Head-CI.
-4. `cdb-local-ci` ist commitgebundene Final-CI-Evidence für Merge-Gates.
+4. Die hosted Required Checks (`ci (Unit/Integration + Lint gesammelt)` +
+   `policy-gate`) sind commitgebundene Final-CI-Evidence für Merge-Gates.
 5. Approval-Review-Artefakte sind weder Final-CI noch Mergefreigabe.
 
 ## 7. Zero-Click und Bootstrap

@@ -11,29 +11,31 @@ set to false.
 
 Before any merge path, run `cdb-pr-completeness-review`. Only a schema-valid
 `MERGE_CANDIDATE` may proceed. Then `cdb-batch-merge-conductor` owns freeze,
-main integration, final validation, and `cdb-local-ci` readiness, and hands
+main integration, final validation, and hosted Required-Check readiness, and hands
 off `FINAL_HEAD_READY_FOR_APPROVAL` to `cdb_final_head_pr_approval_gate`.
 Conductor does not approve or merge. Do not bypass Completeness.
 
 The merge rules below apply only after Completeness `MERGE_CANDIDATE`, the
 Conductor has frozen the PR (`steward_state`/`lifecycle` FROZEN), Final Head
 is ready, and HEAD-bound APPROVE exists for the exact final head. Full Fast-CI
-and `cdb-local-ci` are forbidden as intermediate-slice evidence. Final evidence
+and hosted Required-Check verification are forbidden as intermediate-slice evidence. Final evidence
 binds exact Head and integrated Base SHA; either moving invalidates the
 evidence, Completeness, and Approval and requires a fresh Completeness Review.
 
 Red, missing, stale, or pending required checks are not a reason to stop and ask Jannek.
 
-The only merge-relevant required context for `main` is `cdb-local-ci` (a GitHub
-App **Check Run** bound to `app_id=4410232`, not a Commit Status), exact PR head
-SHA. SSOT: `docs/runbooks/merge_policy_ci_gate.md` and
+The merge-relevant required contexts on `main` are the hosted Check Runs
+`ci (Unit/Integration + Lint gesammelt)` and `policy-gate` (#4540, Branch
+Protection), exact PR head SHA. SSOT: `docs/runbooks/merge_policy_ci_gate.md` and
 `docs/contracts/final_head_merge_pipeline.v1.md`. Verify live with `gh api` —
 do not rely on stale tables. A same-named Commit Status does **not** satisfy
-Branch Protection after #4170 Phase D. Hosted GitHub Actions check-runs
-(including any `ci`/`policy-gate` workflow content) are advisory/safety-relevant
-but are **not** the required merge gate. Hosted Actions red due to billing/runner
-lock is an infra condition, not a code failure, and must not be conflated
-with a missing/red `cdb-local-ci`.
+Branch Protection. `cdb-local-ci` (Local CI Status Publisher, App Check Run
+`app_id=4410232`) is seit #4540 optionaler Developer-Preflight/Diagnose und kein
+branch-protection-required Context. Other hosted check-runs (validate-branch-name,
+gitleaks, trivy, Check Core Duplicates, Check Delivery Gate, guard, E2E Happy
+Path) are advisory/safety-relevant only. Hosted Actions infra red (billing/runner
+lock) is not a code failure and must not be conflated with missing/red hosted
+Required Checks.
 
 If required checks are red, missing, stale, or pending:
 1. Inspect live check status and logs (`gh api` for the live required context;
@@ -41,12 +43,13 @@ If required checks are red, missing, stale, or pending:
 2. Identify the cause; classify as code failure vs. Hosted-Actions
    infra block vs. required-status-missing vs. auth/publisher block.
 3. Update the branch if needed.
-4. Rerun checks / republish `cdb-local-ci` if useful and the session has the
-   capability to do so.
+4. Rerun hosted Required Checks (or republish `cdb-local-ci` as optional
+   preflight) if useful and the session has the capability to do so.
 5. Apply small in-scope fixes if the cause is inside the approved plan.
 6. Recheck.
-7. Only `cdb_final_head_merge_executor` may merge after live `cdb-local-ci`
-   SUCCESS and HEAD-bound APPROVE on the exact PR head SHA.
+7. Only `cdb_final_head_merge_executor` may merge after live hosted Required
+   Check SUCCESS (`ci (Unit/Integration + Lint gesammelt)` + `policy-gate`) and
+   HEAD-bound APPROVE on the exact PR head SHA.
 
 If the failure cannot be fixed within the approved scope:
 - do not expand scope silently
@@ -64,14 +67,15 @@ Exactly one canonical final merge executor exists:
 1. Conductor prepares Final Head and stops at `FINAL_HEAD_READY_FOR_APPROVAL`.
 2. `cdb_final_head_pr_approval_gate` (PR Reviewer) issues GitHub APPROVE bound
    to the exact final `HEAD_SHA`. Cannot merge. Repo-only cloud posture.
-3. Merge Agent re-verifies approval HEAD binding, drift, required App Check Run
-   `cdb-local-ci` (`app_id=4410232`), reviews, and mergeability.
+3. Merge Agent re-verifies approval HEAD binding, drift, hosted Required Checks
+   (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`), reviews, and
+   mergeability.
 4. Merge Agent runs `gh pr merge <PR> --squash --delete-branch`.
 5. `cdb-session-close` verifies live MERGED (may be asynchronous).
 
 Forbidden, always:
-- `--admin` as a bypass for a missing/red/stale `cdb-local-ci`. `--admin` is
-  never a substitute for the required live status.
+- `--admin` as a bypass for missing/red/stale hosted Required Checks.
+  `--admin` is never a substitute for the required live status.
 - Fake-green claims (asserting a status without live `gh api` verification).
 - Merging an untested head (evidence bound to a different SHA than the
   current PR head).
@@ -83,9 +87,9 @@ Forbidden, always:
 
 ## Missing Final-Head readiness → honest handoff, not admin merge, not loops
 
-If Conductor cannot publish/verify `cdb-local-ci` or Final-Head gates fail
-(e.g. no App Check Run publish capability, unbound evidence, auth/publisher
-blocked), do **not** fall back to `--admin` and do **not** loop retries.
+If Conductor cannot verify hosted Required Checks (`ci (Unit/Integration + Lint
+gesammelt)`, `policy-gate`) or Final-Head gates fail (e.g. unbound evidence,
+auth blocked), do **not** fall back to `--admin` and do **not** loop retries.
 Instead:
 
 - Leave the PR open in its current, correctly-described state.
@@ -97,8 +101,8 @@ Instead:
 ## Merge waves and anti-repush
 
 When merging multiple PRs in sequence ("merge waves"): rebase the next PR
-onto the updated `main` and fully revalidate (`cdb-local-ci` SUCCESS on the
-new head) after each merge before merging the next one. Do not batch-merge
+onto the updated `main` and fully revalidate (hosted Required Check SUCCESS on
+the new head) after each merge before merging the next one. Do not batch-merge
 on stale evidence from before the wave started. New head invalidates prior
 APPROVE.
 
@@ -126,9 +130,9 @@ report contract):
 - `DONE_PR_OPEN` — PR open, not yet merge-eligible (e.g. still under
   validation or intentionally left for review).
 - `BLOCKED_LOCAL_VALIDATION` — local Fast-CI or evidence generation failed.
-- `BLOCKED_REQUIRED_STATUS` — `cdb-local-ci` missing/red/stale on the exact
-  head SHA.
-- `BLOCKED_AUTH_PUBLISHER` — session cannot publish/verify `cdb-local-ci` or
+- `BLOCKED_REQUIRED_STATUS` — hosted Required Check(s) missing/red/stale on
+  the exact head SHA.
+- `BLOCKED_AUTH_PUBLISHER` — session cannot verify hosted Required Checks or
   cannot authenticate for the merge action.
 - `HOLD_SCOPE_OR_REVIEW` — scope, governance, or unresolved review blocker.
 - `HOLD_MAIN_OR_HEAD_DRIFT` — validated `main` or PR head changed since
@@ -139,7 +143,8 @@ Merge criteria for Merge Agent (restated):
 2. Diff matches the plan and has no unauthorized scope growth.
 3. HEAD-bound APPROVE from `cdb_final_head_pr_approval_gate` matches current
    head.
-4. `cdb-local-ci` is SUCCESS on the exact PR head SHA (live, via `gh api`).
+4. Hosted Required Checks are SUCCESS on the exact PR head SHA
+   (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`; live, via `gh api`).
 5. Hosted Actions advisory checks are green, skipped with explanation, or
    documented as non-blocking infra (billing/lock ≠ code failure).
 6. No blocking reviews, unresolved blocker threads, or CHANGES_REQUESTED.

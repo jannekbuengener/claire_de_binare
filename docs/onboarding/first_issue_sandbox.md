@@ -246,8 +246,9 @@ Verify live with `gh api` — do not hardcode elsewhere.
 
 | Context | Required? | What it validates |
 |---------|-----------|-------------------|
-| `cdb-local-ci` | **Yes** (Commit Status, exact PR head) | Local Fast-CI evidence published for this head |
-| Hosted Actions (`ci`, `policy-gate`, …) | Advisory | Safety/diagnostics; billing-red ≠ code failure |
+| `ci (Unit/Integration + Lint gesammelt)` | **Yes** (hosted Check Run, exact PR head) | Full Fast-CI published for this head via `ci.yml` |
+| `policy-gate` | **Yes** (hosted Check Run, exact PR head) | PR scope/policy safety gate |
+| `cdb-local-ci` | Optional (local preflight) | Local Fast-CI developer preflight; not merge-required since #4540 |
 
 Only after the PR is frozen as `merge_candidate`, use the final publish path:
 
@@ -266,7 +267,8 @@ Normal squash merge is allowed when **all** capability gates are proven
 (see merge-policy runbook). Not agent-type-based. Checklist:
 
 1. PR is frozen as `merge_candidate`.
-2. Live `cdb-local-ci` SUCCESS on the exact PR head SHA.
+2. Hosted Required Checks `ci (Unit/Integration + Lint gesammelt)` + `policy-gate`
+   SUCCESS live on the exact PR head SHA.
 3. Full local Fast-CI PASS bound to Head and integrated Base SHA.
 4. Diff stays inside the approved scope (docs/onboarding + narrow discovery).
 5. No conflicting lock; no blocking reviews / `CHANGES_REQUESTED`.
@@ -365,8 +367,8 @@ at [`examples/first_issue_to_pr_flow.md`](examples/first_issue_to_pr_flow.md).
 | `main` diverged from `origin/main` | `git fetch origin --prune && git reset --hard origin/main` |
 | Issue already closed | Pick a different open issue. |
 | Matching open PR with active `LOCK:` by another writer | HARD STOP. Wait or ask. |
-| Required status `cdb-local-ci` missing/red on a frozen final merge candidate | Run full Fast-CI + publish on the exact final head, or hand off with `DONE_PR_OPEN_MERGE_HANDOFF` if lacking `statuses:write`. Intermediate slices do not publish. |
-| Hosted Actions `ci`/`policy-gate` red | Treat as advisory; fix real code/governance issues; billing-red ≠ code failure. |
+| Required hosted Check (`ci (Unit/Integration + Lint gesammelt)` / `policy-gate`) missing/red on a frozen final merge candidate | Verify via `gh api` that both were run on the exact final head (`required-checks-audit.yml` can verify), fix real code/governance issues, or hand off with `DONE_PR_OPEN_MERGE_HANDOFF`. Intermediate slices do not run full CI. |
+| Hosted Actions `ci`/`policy-gate` red | Fix real code/governance issues; billing-red ≠ code failure. |
 | Diff grows into runtime/Docker/trading/LR/DB scope | Revert the out-of-scope change. Commit only docs. |
 | Secret value appears in diff | Revert immediately. Do not push. |
 | `CURRENT_STATUS.md` treated as live truth in the change | Correct to ledger/ledger wording. |

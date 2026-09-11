@@ -54,8 +54,8 @@ Use this after `cdb-control-intake` when the next concrete unit of work is one s
      issue is delivered into a compatible open PR, that PR stays open, and the
      issue stays open until a verified merge. A compatible open PR always has
      priority over a new PR.
-   - Never plan a merge, approve, a full final-head Fast-CI, a `cdb-local-ci`
-     publish, an acceptance-chain run (`cdb-integration-wiring-audit`,
+   - Never plan a merge, approve, a full final-head Fast-CI, a hosted
+     Required-Check verification, an acceptance-chain run (`cdb-integration-wiring-audit`,
      `cdb-pr-gap-classifier`, `cdb-pr-completeness-review`,
      `cdb-batch-merge-conductor`), or an issue closure into a delivery
      session.      Final-Head prep, Cloud PR Reviewer APPROVE, and Merge Agent

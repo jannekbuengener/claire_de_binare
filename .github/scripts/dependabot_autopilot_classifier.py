@@ -35,11 +35,15 @@ MANUAL_REVIEW_LABELS = frozenset(
     }
 )
 
-REQUIRED_CHECK_NAMES = ("cdb-local-ci",)
-"""Live required merge context (Commit Status, not Check Run).
+REQUIRED_CHECK_NAMES = (
+    "ci (Unit/Integration + Lint gesammelt)",
+    "policy-gate",
+)
+"""Live required merge checks on `main` (post-#4540).
 
 SSOT: docs/runbooks/merge_policy_ci_gate.md; live baseline snapshot at
 docs/evidence/reports/REQUIRED_CHECK_CONTEXTS_BASELINE_main.json.
+These are hosted GitHub Actions Check Runs (name/status/conclusion).
 """
 
 CHECK_STATUS_COMPLETED = "COMPLETED"

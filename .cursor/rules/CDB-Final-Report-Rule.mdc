@@ -21,7 +21,7 @@ Status:
 Status rules:
 - `DONE_SLICE_ADDED_TO_BATCH_PR` is the normal Issue-Session result after
   targeted Validation, Commit/Push, Ledger update and Issue handoff. It means
-  no Full Fast-CI, no `cdb-local-ci` publish, no merge and no Issue close were
+  no Full Fast-CI, no hosted Required-Check verification, no merge and no Issue close were
   required for that Slice.
 - `DONE_MERGED_CLOSED` requires live verification that the PR is merged on
   `main` (commit present via `gh api`/`git log`, PR state closed as merged).
@@ -37,7 +37,7 @@ Status rules:
   `docs/contracts/final_head_merge_pipeline.v1.md`). State the exact missing
   capability and the next command for a capable session/human.
   `--admin` is never used to convert this into `DONE_MERGED_CLOSED`.
-- `BLOCKED_REQUIRED_STATUS` means `cdb-local-ci` is missing/red/stale on the
+- `BLOCKED_REQUIRED_STATUS` means hosted Required Check(s) are missing/red/stale on the
   exact PR head SHA — the only merge-relevant required context.
 - `BLOCKED_AUTH_PUBLISHER` means the session cannot authenticate or publish
   the required status itself.
@@ -56,7 +56,7 @@ Delivered:
 Validation:
 - <commands, checks, tests, PR checks, or live GitHub evidence>
 - For any merge claim: the exact `gh api`/`gh pr view` evidence that
-  `cdb-local-ci` was SUCCESS on the exact head SHA, and that the merge
+  hosted Required Checks were SUCCESS on the exact head SHA, and that the merge
   landed on `main`.
 
 GitHub/Repo State:

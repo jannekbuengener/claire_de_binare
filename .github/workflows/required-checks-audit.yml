@@ -32,29 +32,17 @@ jobs:
           deadline=$((SECONDS + 780))
           sleep_seconds=10
           summary_file="${GITHUB_STEP_SUMMARY:-}"
-          required_check="cdb-local-ci"
-          required_type="commit_status"
+          required_checks=("ci (Unit/Integration + Lint gesammelt)" "policy-gate")
+          required_type="github-check-run"
 
           echo "Sentinel mode: audit-only"
           echo "SHA: $SHA"
-          echo "Required context: $required_check"
+          echo "Required checks: ${required_checks[*]}"
           echo "Required type: $required_type"
 
           final_state=""
           final_detail=""
           while true; do
-            if ! status_json="$(gh api -H "Accept: application/vnd.github+json" \
-              "/repos/$REPO/commits/$SHA/status" 2>&1)"; then
-              echo "::warning::Combined Commit Status read failed: $status_json"
-              if [[ $SECONDS -ge $deadline ]]; then
-                final_state="TIMEOUT"
-                final_detail="Commit Status API failed until deadline"
-                break
-              fi
-              sleep "$sleep_seconds"
-              continue
-            fi
-
             if ! check_runs_json="$(gh api -H "Accept: application/vnd.github+json" \
               "/repos/$REPO/commits/$SHA/check-runs?per_page=100" 2>&1)"; then
               echo "::warning::Check Runs read failed: $check_runs_json"
@@ -67,75 +55,73 @@ jobs:
               continue
             fi
 
-            commit_status="$(
-              jq -c --arg n "$required_check" \
-                '[.statuses[] | select(.context == $n)] |
-                 sort_by(.updated_at // .created_at // "") | last // {}' \
-                <<<"$status_json"
-            )"
-            status_state="$(
-              jq -r '.state // "__MISSING__"' <<<"$commit_status" |
-                tr '[:lower:]' '[:upper:]'
-            )"
-            status_url="$(
-              jq -r '.target_url // empty' <<<"$commit_status"
-            )"
-            namesake_check_count="$(
-              jq --arg n "$required_check" \
-                '[.check_runs[] | select(.name == $n)] | length' \
-                <<<"$check_runs_json"
-            )"
+            unresolved=()
+            failed_check=""
+            for required_check in "${required_checks[@]}"; do
+              check_run="$(
+                jq -c --arg n "$required_check" \
+                  '[.check_runs[] | select(.name == $n)] | last // {}' \
+                  <<<"$check_runs_json"
+              )"
+              conclusion="$(
+                jq -r '.conclusion // "__MISSING__"' <<<"$check_run" |
+                  tr '[:lower:]' '[:upper:]'
+              )"
+              run_url="$(
+                jq -r '.html_url // empty' <<<"$check_run"
+              )"
+              case "$conclusion" in
+                SUCCESS|NEUTRAL)
+                  final_detail="$final_detail${final_detail:+; }$required_check=SUCCESS"
+                  ;;
+                PENDING|IN_PROGRESS|QUEUED)
+                  echo "PENDING: $required_check (conclusion=$conclusion)"
+                  unresolved+=("$required_check")
+                  ;;
+                __MISSING__)
+                  echo "MISSING: $required_check"
+                  unresolved+=("$required_check")
+                  ;;
+                *)
+                  final_state="FAILED"
+                  final_detail="$final_detail${final_detail:+; }$required_check=$conclusion"
+                  if [[ -n "$run_url" ]]; then
+                    final_detail="$final_detail (url=$run_url)"
+                  fi
+                  failed_check="$required_check"
+                  ;;
+              esac
+            done
 
-            if [[ "$status_state" == "__MISSING__" ]]; then
-              final_detail="required Commit Status is missing"
-              if [[ "$namesake_check_count" -gt 0 ]]; then
-                final_detail="$final_detail; namesake check run is not accepted"
-              fi
-              echo "MISSING: $required_check ($final_detail)"
+            if [[ -n "$failed_check" ]]; then
+              break
+            fi
+
+            if [[ "${#unresolved[@]}" -gt 0 ]]; then
               if [[ $SECONDS -ge $deadline ]]; then
-                final_state="MISSING"
+                if [[ -z "$final_state" ]]; then
+                  final_state="UNRESOLVED"
+                  final_detail="required Checks not SUCCESS until deadline: ${unresolved[*]}"
+                fi
                 break
               fi
               sleep "$sleep_seconds"
               continue
             fi
 
-            case "$status_state" in
-              SUCCESS)
-                final_state="OK"
-                final_detail="Commit Status state=success"
-                ;;
-              PENDING)
-                echo "PENDING: $required_check (Commit Status state=pending)"
-                if [[ $SECONDS -ge $deadline ]]; then
-                  final_state="TIMEOUT"
-                  final_detail="Commit Status remained pending"
-                  break
-                fi
-                sleep "$sleep_seconds"
-                continue
-                ;;
-              FAILURE|ERROR)
-                final_state="FAILED"
-                final_detail="Commit Status state=${status_state,,}"
-                ;;
-              *)
-                final_state="FAILED"
-                final_detail="unknown Commit Status state=$status_state"
-                ;;
-            esac
-            if [[ -n "$status_url" ]]; then
-              final_detail="$final_detail; url=$status_url"
+            if [[ -z "$final_state" ]]; then
+              final_state="OK"
             fi
             break
           done
 
           case "$final_state" in
             OK)
-              echo "OK: $required_check ($final_detail)"
+              echo "OK: required checks all SUCCESS"
+              echo "Detail: $final_detail"
               ;;
             *)
-              echo "::warning::$required_check -> $final_state ($final_detail)"
+              echo "::warning::required checks -> $final_state ($final_detail)"
               ;;
           esac
 
@@ -145,11 +131,10 @@ jobs:
               echo
               echo "- Mode: \`audit-only\`"
               echo "- SHA: \`$SHA\`"
-              echo "- Required context: \`$required_check\`"
+              echo "- Required checks: \`${required_checks[*]}\`"
               echo "- Required type: \`$required_type\`"
               echo "- Result: \`$final_state\`"
               echo "- Detail: ${final_detail//|/\\|}"
-              echo "- Check Runs are diagnostic only and cannot satisfy this Commit Status."
             } >> "$summary_file"
           fi
 

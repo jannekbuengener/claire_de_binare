@@ -197,8 +197,11 @@ def test_live_protection_uses_checks_app_binding() -> None:
         return_value=(
             {
                 "required_status_checks": {
-                    "contexts": ["cdb-local-ci"],
-                    "checks": [{"context": "cdb-local-ci", "app_id": 9999999}],
+                    "contexts": ["ci (Unit/Integration + Lint gesammelt)", "policy-gate"],
+                    "checks": [
+                        {"context": "ci (Unit/Integration + Lint gesammelt)", "app_id": 9999999},
+                        {"context": "policy-gate"},
+                    ],
                 }
             },
             None,

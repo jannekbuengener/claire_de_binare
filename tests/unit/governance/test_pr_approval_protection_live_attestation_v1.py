@@ -38,15 +38,15 @@ TRUST_POLICY = yaml.safe_load(
 
 
 def _protection_payload(*, contexts: list[str] | None = None) -> dict[str, Any]:
-    names = contexts or ["cdb-local-ci"]
+    names = contexts or [
+        "ci (Unit/Integration + Lint gesammelt)",
+        "policy-gate",
+    ]
     return {
         "required_status_checks": {
             "strict": True,
             "contexts": names,
-            "checks": [
-                {"context": name, "app_id": 4410232 if name == "cdb-local-ci" else None}
-                for name in names
-            ],
+            "checks": [{"context": name} for name in names],
         }
     }
 
@@ -57,7 +57,7 @@ def _attestation_comment(
     base_sha: str = BASE,
     contexts: list[str] | None = None,
     trusted: bool = True,
-    observed_at: str = "2026-09-02T00:00:00Z",
+    observed_at: str | None = None,
 ) -> dict[str, Any]:
     envelope = build_protection_live_envelope(
         repository=REPO,
@@ -81,7 +81,7 @@ def _attestation_comment(
 def test_observed_check_run_does_not_substitute_protection_when_api_unreadable() -> (
     None
 ):
-    """Negative case: cdb-local-ci on HEAD must not fake-green protection (#4505)."""
+    """Negative case: observed hosted check on HEAD must not fake-green protection (#4505)."""
     pr_payload = {
         "head": {"sha": HEAD},
         "base": {"sha": BASE, "ref": "main"},
@@ -106,7 +106,7 @@ def test_observed_check_run_does_not_substitute_protection_when_api_unreadable()
             return {
                 "check_runs": [
                     {
-                        "name": "cdb-local-ci",
+                        "name": "ci (Unit/Integration + Lint gesammelt)",
                         "status": "completed",
                         "conclusion": "success",
                         "head_sha": HEAD,
@@ -204,7 +204,9 @@ def test_trusted_attestation_used_when_branch_protection_api_unreadable() -> Non
         )
 
     assert snap["protection_source"] == "trusted_attestation"
-    assert snap["protection"]["required_checks"][0]["name"] == "cdb-local-ci"
+    assert snap["protection"]["required_checks"][0]["name"] == (
+        "ci (Unit/Integration + Lint gesammelt)"
+    )
     assert "strict" not in snap["protection"]
     assert snap["protection_read"]["strict"] is True
     assert "PROTECTION_READ_UNAVAILABLE" not in snap.get("final_head_reason_codes", [])
@@ -217,12 +219,22 @@ def test_attested_protection_view_matches_api_fingerprint() -> None:
 
     api_view = {
         "required_checks": [
-            {"name": "cdb-local-ci", "app_id": 4410232, "mechanism": "check_run"}
+            {
+                "name": "ci (Unit/Integration + Lint gesammelt)",
+                "app_id": None,
+                "mechanism": "check_run",
+            },
+            {"name": "policy-gate", "app_id": None, "mechanism": "check_run"},
         ]
     }
     attested_view = {
         "required_checks": [
-            {"name": "cdb-local-ci", "app_id": 4410232, "mechanism": "check_run"}
+            {
+                "name": "ci (Unit/Integration + Lint gesammelt)",
+                "app_id": None,
+                "mechanism": "check_run",
+            },
+            {"name": "policy-gate", "app_id": None, "mechanism": "check_run"},
         ]
     }
     assert protection_view_fingerprint(api_view) == protection_view_fingerprint(
@@ -420,7 +432,7 @@ def test_trusted_attestation_resolves_for_cdb_local_ci_app() -> None:
             repo_root=REPO_ROOT,
         )
     assert resolved is not None
-    assert resolved.required_checks[0]["name"] == "cdb-local-ci"
+    assert resolved.required_checks[0]["name"] == "ci (Unit/Integration + Lint gesammelt)"
 
 
 @pytest.mark.unit
@@ -431,7 +443,7 @@ def test_attestation_with_extra_required_context_is_authoritative() -> None:
         base_ref="main",
         base_sha=BASE,
         protection_payload=_protection_payload(
-            contexts=["cdb-local-ci", "extra-required-check"]
+            contexts=["ci (Unit/Integration + Lint gesammelt)", "extra-required-check"]
         ),
     )
     body = format_protection_attestation_comment_body(envelope)
@@ -440,6 +452,6 @@ def test_attestation_with_extra_required_context_is_authoritative() -> None:
     checks = envelope["protection"]["required_checks"]
     assert len(checks) == 2
     assert {item["name"] for item in checks} == {
-        "cdb-local-ci",
+        "ci (Unit/Integration + Lint gesammelt)",
         "extra-required-check",
     }

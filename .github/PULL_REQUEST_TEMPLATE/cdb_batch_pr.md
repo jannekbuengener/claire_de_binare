@@ -28,7 +28,7 @@ risk_flags: <sorted-flags-or-none>
 - Integrated Base SHA: `pending`
 - Full Fast-CI: `pending`
 - Policy-Gate mirror: `pending`
-- `cdb-local-ci` exact SHA: `pending`
+- Hosted Required Checks exact SHA (`ci (Unit/Integration + Lint gesammelt)`, `policy-gate`): `pending`
 - Blocking reviews: `pending`
 
 ## Guardrails

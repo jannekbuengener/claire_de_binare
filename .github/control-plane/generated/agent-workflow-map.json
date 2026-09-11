@@ -8,7 +8,8 @@
     "Graph parser ignores issue-template and root-config backtick references."
   ],
   "required_check_contexts": [
-    "cdb-local-ci"
+    "ci (Unit/Integration + Lint gesammelt)",
+    "policy-gate"
   ],
   "unregistered_on_disk": [],
   "risky_schedule_collisions": {
@@ -310,6 +311,7 @@
       "name": "ci",
       "purpose": "ci",
       "triggers": [
+        "pull_request",
         "push",
         "workflow_dispatch"
       ],
@@ -319,7 +321,7 @@
       "writes_github": false,
       "has_schedule": false,
       "status": "active",
-      "required_check_producer": false,
+      "required_check_producer": true,
       "registered_in_markdown_register": true,
       "risk": "low"
     },
@@ -546,8 +548,8 @@
     },
     {
       "file": "emoji-bot.yml",
-      "name": "\ud83e\udd16 Emoji Fix Bot",
-      "purpose": "\ud83e\udd16 Emoji Fix Bot",
+      "name": "🤖 Emoji Fix Bot",
+      "purpose": "🤖 Emoji Fix Bot",
       "triggers": [
         "issue_comment",
         "workflow_dispatch"
@@ -565,8 +567,8 @@
     },
     {
       "file": "emoji-filter.yml",
-      "name": "\ud83d\udeab Advanced Emoji Filter",
-      "purpose": "\ud83d\udeab Advanced Emoji Filter",
+      "name": "🚫 Advanced Emoji Filter",
+      "purpose": "🚫 Advanced Emoji Filter",
       "triggers": [
         "workflow_dispatch"
       ],
@@ -735,7 +737,7 @@
       "writes_github": false,
       "has_schedule": false,
       "status": "active",
-      "required_check_producer": false,
+      "required_check_producer": true,
       "registered_in_markdown_register": true,
       "risk": "low"
     },
@@ -972,8 +974,8 @@
     },
     {
       "file": "sync-labels.yml",
-      "name": "\ud83c\udff7\ufe0f Sync Repository Labels",
-      "purpose": "\ud83c\udff7\ufe0f Sync Repository Labels",
+      "name": "🏷️ Sync Repository Labels",
+      "purpose": "🏷️ Sync Repository Labels",
       "triggers": [
         "push",
         "workflow_dispatch"

@@ -1,11 +1,12 @@
-# Local CI Status Publisher (Phase 3a)
+# Local CI Status Publisher (Phase 3a; optionaler Preflight seit #4540)
 
 Trusted, fail-closed publisher that turns **validated** local Docker CI evidence
 into a GitHub **App-bound Check Run** for the exact commit SHA.
 
 Issue: [#4164](https://github.com/jannekbuengener/Claire_de_Binare/issues/4164)
 Related: [#4169](https://github.com/jannekbuengener/Claire_de_Binare/issues/4169),
-[#4170](https://github.com/jannekbuengener/Claire_de_Binare/issues/4170) (CLOSED — Phase D cutover)
+[#4170](https://github.com/jannekbuengener/Claire_de_Binare/issues/4170) (CLOSED — Phase D cutover),
+[#4540](https://github.com/jannekbuengener/Claire_de_Binare/issues/4540) (hosted Required Checks
 
 ## Architecture and trust boundary
 
@@ -19,11 +20,13 @@ local Docker CI (ci/scripts/run.py)
 
 GitHub remains the PR / status / merge platform. Rechenintensive CI bleibt lokal.
 
-**Live trust model (post-#4170 Phase D):** Branch Protection requires
-`cdb-local-ci` as an **App-bound Check Run** (`app_id=4410232`). Default CLI
-backend is `--publisher-backend check-run` with App auto-mint. A same-named
-**Commit Status does not satisfy** the required gate. Preview/shadow name
-`cdb-local-ci-app-preview` remains non-required for smoke tests.
+**Seit #4540 (hosted Required Checks):** `cdb-local-ci` ist **kein**
+branch-protection-required Context mehr. Die merge-relevanten Required Checks
+sind die hosted GitHub Checks `ci (Unit/Integration + Lint gesammelt)` und
+`policy-gate`. Der lokale Publisher bleibt als optionaler
+Developer-Preflight/Diagnose-Pfad verfügbar (`--publisher-backend check-run`,
+App auto-mint). Preview/shadow name `cdb-local-ci-app-preview` bleibt
+non-required für Smoke Tests.
 
 ## Why local green is not automatically trusted
 
@@ -46,11 +49,11 @@ policy-gate failures all block publish with a clear `REJECT:`.
 
 Billing lock or GitHub-hosted Actions failures do **not** weaken these rules.
 
-## Required-check path (`cdb-local-ci`)
+## Preflight path (`cdb-local-ci`, optional seit #4540)
 
 | Context | `--pr-number` | Policy-gate local mirror |
 |---------|---------------|--------------------------|
-| `cdb-local-ci` (default / required path) | **Mandatory** (`> 0`) | Run on dry-run and publish after evidence OK |
+| `cdb-local-ci` (default / Preflight) | **Mandatory** (`> 0`) | Run on dry-run and publish after evidence OK |
 | `cdb-local-ci-preview` | Optional | Run when `--pr-number` is set |
 
 The mirror lives in `tools/ci/policy_gate_local.py` and evaluates category
@@ -71,15 +74,16 @@ with an explicit `skip_reason`. Skips are disclosed in the status description.
 
 **Default (post-#4170 Phase D):** App-bound Check Run
 (`POST /repos/{owner}/{repo}/check-runs`) via `--publisher-backend check-run`
-with auto-mint. Live Branch Protection requires `cdb-local-ci` with
-`app_id=4410232`.
+with auto-mint. Dieser Check Run ist seit #4540 optionale Preflight-Evidence,
+kein Required Context; die merge-relevanten Checks sind die hosted
+`ci (Unit/Integration + Lint gesammelt)` und `policy-gate`.
 
 **Legacy Commit Status** (`--publisher-backend commit-status`) remains for
 debug only and does **not** satisfy Branch Protection.
 
 | Surface | Auth needed | Status |
 |---------|-------------|--------|
-| Check Run | App ID + Installation ID + PEM (auto-mint) **or** `CDB_GH_APP_INSTALLATION_TOKEN` override | **Default / required path** |
+| Check Run | App ID + Installation ID + PEM (auto-mint) **or** `CDB_GH_APP_INSTALLATION_TOKEN` override | Default / Preflight |
 | Commit Status | PAT / `gh` with statuses write | Legacy only (not BP-sufficient) |
 
 `GitHubStatusClient` still has no `create_check_run` method. Check Runs live in
@@ -119,7 +123,7 @@ Troubleshooting:
 ### CLI backend switch
 
 ```bash
-# Default — App-bound required Check Run path (satisfies BP)
+# Default — App-bound Check Run Preflight path (optional, seit #4540 nicht mehr required)
 python -m ci.publisher publish --evidence-dir ci/artifacts/<run_id> \
   --commit-sha <sha> --pr-number <n>
 
@@ -132,7 +136,7 @@ Live BP requires App `4410232`. Same-named Commit Status is not merge-sufficient
 
 ## Authentication (least privilege)
 
-**Required path (Check Run):** App auto-mint — `CDB_GH_APP_ID` +
+**Preflight path (Check Run):** App auto-mint — `CDB_GH_APP_ID` +
 `CDB_GH_APP_INSTALLATION_ID` + PEM path/env (see Check Run auth priority
 above). Needs App permission **checks:write**. No PAT required for publish.
 
@@ -168,7 +172,7 @@ rather than discover the failure mid-merge attempt:
 3. Attempt `python -m ci.publisher dry-run ...` first; auth/permission failures
    surface as clear `REJECT:` without mutating Branch Protection.
 
-If the preflight shows the session cannot create the required App Check Run
+If the preflight shows the session cannot create the optional App Check Run
 (missing PEM/IDs, no `checks:write`, mint 401/403): do not fall back to
 `--admin` merge, do not publish a same-named Commit Status as a substitute,
 and do not loop retries. Report `DONE_PR_OPEN_MERGE_HANDOFF` /
@@ -233,25 +237,28 @@ PR head SHA from GitHub and rejects dry-run/publish if it differs from
 `--commit-sha` / evidence SHA. Publish re-checks the head immediately before the
 status write.
 
-## Branch Protection (live, post-#4170 Phase D)
+## Branch Protection (live, post-#4540)
 
-Live required status checks on `main` are:
+Live required status checks on `main` are the hosted GitHub Checks:
 
-- context / check name: `cdb-local-ci`
-- type: GitHub App Check Run (`app_id=4410232`)
+- context / check name: `ci (Unit/Integration + Lint gesammelt)`
+- context / check name: `policy-gate`
+- type: GitHub-hosted Check Runs (Actions, kein hartkodiertes `app_id`)
 - same-named Commit Status: **not** merge-sufficient
 
-Baselines and governance guards track the live state. GitHub-hosted `ci.yml` /
-`policy-gate.yml` remain available as workflow content but are **not**
-BP-required.
+Baselines and governance guards track the live state (`docs/evidence/reports/`,
+`required-checks-audit.yml`). `cdb-local-ci` ist seit #4540 **kein** Required
+Context mehr; der lokale Preflight ersetzt die hosted Required Checks nicht.
 
-Use `cdb-local-ci-app-preview` for optional shadow smoke without the required
+Use `cdb-local-ci-app-preview` for optional shadow smoke without the preflight
 name.
 
 ## Post-cutover operations
 
-Phase D cutover is **complete** (#4170 closed). Normal merge publish uses
-`--publisher-backend check-run` (CLI default) with App auto-mint. See
+Phase D cutover (#4170) ist abgeschlossen; seit #4540 ist der App Check Run
+`cdb-local-ci` optionaler Preflight und nicht mehr merge-relevant. Der
+Preflight-Publish nutzt `--publisher-backend check-run` (CLI default) mit App
+auto-mint. See
 [`docs/runbooks/cdb_local_ci_app_check_run_cutover.md`](../runbooks/cdb_local_ci_app_check_run_cutover.md)
 for rollback notes and permission matrix.
 

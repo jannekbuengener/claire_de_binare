@@ -45,13 +45,17 @@ def _checks(
     status: str = "COMPLETED",
     conclusion: str = "SUCCESS",
 ) -> tuple[RequiredCheckFact, ...]:
-    """Build the sole live required merge context (`cdb-local-ci`).
+    """Build the live required merge checks on `main` (post-#4540).
 
-    `cdb-local-ci` is an App-bound Check Run (`app_id=4410232`, not a hosted Actions job) per
-    docs/runbooks/merge_policy_ci_gate.md; it is the only merge-relevant
-    required context.
+    Both ``ci (Unit/Integration + Lint gesammelt)`` and ``policy-gate`` are
+    hosted GitHub Actions Check Runs per
+    docs/runbooks/merge_policy_ci_gate.md; they are the only merge-relevant
+    required contexts.
     """
-    return (RequiredCheckFact("cdb-local-ci", status, conclusion),)
+    return (
+        RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", status, conclusion),
+        RequiredCheckFact("policy-gate", status, conclusion),
+    )
 
 
 def _facts(**overrides: object) -> Facts:
@@ -394,8 +398,8 @@ def test_duplicate_required_check_with_conflicting_results_holds() -> None:
     result = classifier.classify_dependabot_pr(
         _facts(
             required_checks=(
-                RequiredCheckFact("cdb-local-ci", "COMPLETED", "SUCCESS"),
-                RequiredCheckFact("cdb-local-ci", "COMPLETED", "FAILURE"),
+                RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", "COMPLETED", "SUCCESS"),
+                RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", "COMPLETED", "FAILURE"),
             )
         ),
         _load_policy(),
@@ -667,7 +671,7 @@ MALFORMED_FACT_CASES = [
     pytest.param(
         {
             "required_checks": (
-                RequiredCheckFact("cdb-local-ci", 123, "SUCCESS"),  # type: ignore[arg-type]
+                RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", 123, "SUCCESS"),  # type: ignore[arg-type]
             )
         },
         id="required_check_status_int",
@@ -675,7 +679,7 @@ MALFORMED_FACT_CASES = [
     pytest.param(
         {
             "required_checks": (
-                RequiredCheckFact("cdb-local-ci", "COMPLETED", []),  # type: ignore[arg-type]
+                RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", "COMPLETED", []),  # type: ignore[arg-type]
             )
         },
         id="required_check_conclusion_list",

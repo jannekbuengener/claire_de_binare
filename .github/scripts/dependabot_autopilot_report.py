@@ -25,18 +25,21 @@ DEFAULT_ALLOWLIST = REPO_ROOT / ".github" / "dependabot-autopilot-allowlist.yml"
 DEPENDABOT_LOGINS = frozenset({"dependabot[bot]", "app/dependabot"})
 DEPENDABOT_HEAD_PREFIX = "dependabot/"
 
-REQUIRED_CHECK_NAMES = ("cdb-local-ci",)
-"""Live required merge context per docs/runbooks/merge_policy_ci_gate.md.
+REQUIRED_CHECK_NAMES = (
+    "ci (Unit/Integration + Lint gesammelt)",
+    "policy-gate",
+)
+"""Live required merge checks per docs/runbooks/merge_policy_ci_gate.md.
 
-`cdb-local-ci` is an App-bound Check Run (`app_id=4410232`) published by the local
-Fast-CI publisher. Hosted GitHub Actions check-runs remain advisory only and
-are not consulted here."""
+These are hosted GitHub Actions Check Runs (`name`/`status`/`conclusion`) on
+`main` (post-#4540). The local Fast-CI publisher (`cdb-local-ci`) is no longer
+a required merge context and is not consulted here."""
 
 ALLOWED_GET_ENDPOINT = re.compile(
     r"^repos/[^/]+/[^/]+/"
     r"(?:"
     r"pulls(?:/\d+(?:/(?:files|commits))?)?"
-    r"|commits/[0-9a-f]{40}/status"
+    r"|commits/[0-9a-f]{40}/check-runs"
     r"|compare/[0-9a-f]{40}\.\.\.[0-9a-f]{40}"
     r")$"
 )
@@ -147,6 +150,12 @@ def _merge_paginated_payload(documents: Sequence[Any]) -> Any:
             merged_statuses.extend(doc.get("statuses") or [])
         return merged_statuses
 
+    if all(isinstance(doc, Mapping) and "check_runs" in doc for doc in documents):
+        merged_check_runs: list[Any] = []
+        for doc in documents:
+            merged_check_runs.extend(doc.get("check_runs") or [])
+        return merged_check_runs
+
     return documents[-1]
 
 
@@ -197,6 +206,8 @@ class SubprocessGhTransport:
                 f"malformed gh api paginated JSON for {endpoint}: {exc}"
             ) from exc
         payload = _merge_paginated_payload(documents)
+        if isinstance(payload, Mapping) and "check_runs" in payload:
+            return payload.get("check_runs") or []
         if isinstance(payload, Mapping) and "statuses" in payload:
             return payload.get("statuses") or []
         return payload
@@ -597,25 +608,53 @@ _STATUS_STATE_MAP: dict[str, tuple[str, str]] = {
     "pending": ("IN_PROGRESS", "PENDING"),
 }
 
+_CHECK_RUN_STATUS_MAP: dict[str, tuple[str, str]] = {
+    "completed": ("COMPLETED", "SUCCESS"),
+    "queued": ("IN_PROGRESS", "PENDING"),
+    "in_progress": ("IN_PROGRESS", "PENDING"),
+    "waiting": ("IN_PROGRESS", "PENDING"),
+}
+
 
 def _normalize_required_check_facts(
     statuses: Sequence[Mapping[str, Any]],
 ) -> list[Any]:
-    """Map Commit Status entries (`context`/`state`) to RequiredCheckFact.
+    """Map Check Run entries (`name`/`status`/`conclusion`) to RequiredCheckFact.
 
-    `cdb-local-ci` merge gate is a GitHub App Check Run (`app_id=4410232`), not a Commit Status,
-    so the live payload shape differs from hosted Actions check-runs
-    (`context`/`state` instead of `name`/`status`/`conclusion`).
+    The post-#4540 merge gate (`ci (Unit/Integration + Lint gesammelt)`,
+    `policy-gate`) is published by hosted GitHub Actions as Check Runs, so the
+    live payload shape is `name`/`status`/`conclusion`. Commit Status entries
+    (`context`/`state`) are no longer consulted.
     """
     classifier = _load_classifier_module()
     facts: list[Any] = []
     for entry in statuses:
-        name = str(entry.get("context") or "").strip()
+        name = str(entry.get("name") or "").strip()
         if name not in REQUIRED_CHECK_NAMES:
             continue
-        state = str(entry.get("state") or "").strip().lower()
-        status, conclusion = _STATUS_STATE_MAP.get(state, ("UNKNOWN", "UNKNOWN"))
-        facts.append(classifier.RequiredCheckFact(name, status, conclusion))
+        raw_status = str(entry.get("status") or "").strip().lower()
+        conclusion = str(entry.get("conclusion") or "").strip().lower()
+        if raw_status == "completed":
+            if conclusion == "success":
+                status, normalized_conclusion = "COMPLETED", "SUCCESS"
+            elif conclusion in (
+                "failure",
+                "cancelled",
+                "timed_out",
+                "action_required",
+                "startup_failure",
+                "stale",
+            ):
+                status, normalized_conclusion = "COMPLETED", "FAILURE"
+            else:
+                status, normalized_conclusion = "UNKNOWN", "UNKNOWN"
+        elif raw_status in ("queued", "in_progress", "waiting"):
+            status, normalized_conclusion = "IN_PROGRESS", "PENDING"
+        else:
+            status, normalized_conclusion = "UNKNOWN", "UNKNOWN"
+        facts.append(
+            classifier.RequiredCheckFact(name, status, normalized_conclusion)
+        )
     return facts
 
 
@@ -742,9 +781,12 @@ def _build_facts_for_pull(
     if head_sha:
         try:
             payload = transport.get_json(
-                f"repos/{repo}/commits/{head_sha}/status",
+                f"repos/{repo}/commits/{head_sha}/check-runs",
                 params={"per_page": "100"},
             )
+            if isinstance(payload, Mapping):
+                check_runs = payload.get("check_runs")
+                payload = check_runs if isinstance(check_runs, list) else None
             if isinstance(payload, list):
                 required_check_entries = [
                     item for item in payload if isinstance(item, Mapping)

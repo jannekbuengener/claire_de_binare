@@ -16,7 +16,10 @@
   "required_status_checks": {
     "checks": [
       {
-        "context": "cdb-local-ci"
+        "context": "ci (Unit/Integration + Lint gesammelt)"
+      },
+      {
+        "context": "policy-gate"
       }
     ],
     "strict": true

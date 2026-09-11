@@ -418,10 +418,12 @@ mypy core/ services/
 5. Push the slice, update the PR ledger and Issue handoff, then stop with
    `DONE_SLICE_ADDED_TO_BATCH_PR`. Do not merge or close the Issue by default.
 6. Only a frozen `merge_candidate` receives combined-diff review, full Fast-CI,
-   exact-head `cdb-local-ci`, and the separate authorized merge flow.
+   hosted Required Checks, and the separate authorized merge flow.
 
-**Required status at merge**: `cdb-local-ci` is a Commit Status on the exact
-final PR head. It is not required for an intermediate slice handoff.
+**Required status at merge**: the hosted Required Checks
+`ci (Unit/Integration + Lint gesammelt)` and `policy-gate` must be SUCCESS on
+the exact final PR head. They are not required for an intermediate slice
+handoff.
 Scope boundaries: no runtime, Docker, live-trading, LR, or DB-write changes
 without explicit issue scope.
 

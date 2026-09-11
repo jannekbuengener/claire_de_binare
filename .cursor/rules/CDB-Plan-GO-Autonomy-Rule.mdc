@@ -7,7 +7,7 @@ alwaysApply: true
 Plan-GO authorizes only the routed Delivery-Slice unless the plan explicitly
 defines a Final-Head / Approval / Merge-Agent phase. It does not authorize a
 new PR when a compatible Batch-PR exists and does not turn a Merge Trigger into
-approval or merge authority. Full Fast-CI and `cdb-local-ci` publish apply only
+approval or merge authority. Full Fast-CI and hosted Required-Check verification apply only
 to a frozen `merge_candidate` on its exact final Head and integrated Base.
 Regular merge remains owned solely by `cdb_final_head_merge_executor`.
 
@@ -33,10 +33,10 @@ After Plan-GO:
 Allowed after Plan-GO, if explicitly inside scope:
 - review PRs
 - inspect diffs
-- check required checks (live `cdb-local-ci` via `gh api`; see
+- check required checks (live hosted Required Checks via `gh api`; see
   `CDB-Checks-and-Merge-Rule.mdc`)
 - update branches
-- rerun checks / republish `cdb-local-ci` if capable
+- rerun hosted Required Checks / republish `cdb-local-ci` (optional preflight) if capable
 - implement small in-scope fixes
 - commit and push
 - resolve review threads
