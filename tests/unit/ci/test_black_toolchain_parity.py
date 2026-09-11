@@ -26,7 +26,7 @@ UNVERSIONED_RUFF_BLACK = re.compile(
 def test_requirements_dev_pins_expected_black() -> None:
     assert pinned_black_version(REPO_ROOT) == "26.5.1"
     text = (REPO_ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
-    assert "ruff==0.16.5" in text
+    assert "ruff==0.16.6" in text
 
 
 def test_dockerfile_has_no_unversioned_ruff_black_reinstall() -> None:
