@@ -691,9 +691,7 @@ AGENT_WORKFLOW_MAP_JSON = (
 
 # Post-#4540: required contexts are hosted GitHub Actions job names (ci/policy-gate),
 # not a locally-published App Check Run.
-REQUIRED_CHECK_PRODUCER_FILES: frozenset[str] = frozenset(
-    {"ci.yml", "policy-gate.yml"}
-)
+REQUIRED_CHECK_PRODUCER_FILES: frozenset[str] = frozenset({"ci.yml", "policy-gate.yml"})
 
 RISKY_CASCADE_FAMILIES: dict[str, tuple[str, ...]] = {
     "label_event_cascade": tuple(sorted(LABEL_CASCADE_WORKFLOW_FILES)),

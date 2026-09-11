@@ -432,7 +432,9 @@ def test_trusted_attestation_resolves_for_cdb_local_ci_app() -> None:
             repo_root=REPO_ROOT,
         )
     assert resolved is not None
-    assert resolved.required_checks[0]["name"] == "ci (Unit/Integration + Lint gesammelt)"
+    assert (
+        resolved.required_checks[0]["name"] == "ci (Unit/Integration + Lint gesammelt)"
+    )
 
 
 @pytest.mark.unit

@@ -259,15 +259,15 @@ class PRCheckInspector:
     def get_pr_checks(self) -> List[CheckResult]:
         """Get all checks for the PR.
 
-`statusCheckRollup` mixes two GitHub object shapes:
-        - Check Run (Hosted Actions): `name` / `status` / `conclusion`.
-        - Required hosted Check Runs (`ci (Unit/Integration + Lint gesammelt)`,
-          `policy-gate`) use Check Run `name` / `conclusion`; legacy Commit
-          Status same name is not merge-sufficient. Rollup may still include
-          StatusContext entries (no separate
-          status/conclusion pair). Both are normalized into `CheckResult`
-          here so downstream logic (required-check lookup, categorization)
-          does not need to special-case the required context.
+        `statusCheckRollup` mixes two GitHub object shapes:
+                - Check Run (Hosted Actions): `name` / `status` / `conclusion`.
+                - Required hosted Check Runs (`ci (Unit/Integration + Lint gesammelt)`,
+                  `policy-gate`) use Check Run `name` / `conclusion`; legacy Commit
+                  Status same name is not merge-sufficient. Rollup may still include
+                  StatusContext entries (no separate
+                  status/conclusion pair). Both are normalized into `CheckResult`
+                  here so downstream logic (required-check lookup, categorization)
+                  does not need to special-case the required context.
         """
         data = self.run_gh_command(
             [

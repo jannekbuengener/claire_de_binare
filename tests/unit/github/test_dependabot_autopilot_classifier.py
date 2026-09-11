@@ -398,8 +398,12 @@ def test_duplicate_required_check_with_conflicting_results_holds() -> None:
     result = classifier.classify_dependabot_pr(
         _facts(
             required_checks=(
-                RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", "COMPLETED", "SUCCESS"),
-                RequiredCheckFact("ci (Unit/Integration + Lint gesammelt)", "COMPLETED", "FAILURE"),
+                RequiredCheckFact(
+                    "ci (Unit/Integration + Lint gesammelt)", "COMPLETED", "SUCCESS"
+                ),
+                RequiredCheckFact(
+                    "ci (Unit/Integration + Lint gesammelt)", "COMPLETED", "FAILURE"
+                ),
             )
         ),
         _load_policy(),

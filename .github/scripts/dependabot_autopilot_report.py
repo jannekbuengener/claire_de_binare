@@ -652,9 +652,7 @@ def _normalize_required_check_facts(
             status, normalized_conclusion = "IN_PROGRESS", "PENDING"
         else:
             status, normalized_conclusion = "UNKNOWN", "UNKNOWN"
-        facts.append(
-            classifier.RequiredCheckFact(name, status, normalized_conclusion)
-        )
+        facts.append(classifier.RequiredCheckFact(name, status, normalized_conclusion))
     return facts
 
 

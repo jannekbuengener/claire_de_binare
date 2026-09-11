@@ -197,9 +197,15 @@ def test_live_protection_uses_checks_app_binding() -> None:
         return_value=(
             {
                 "required_status_checks": {
-                    "contexts": ["ci (Unit/Integration + Lint gesammelt)", "policy-gate"],
+                    "contexts": [
+                        "ci (Unit/Integration + Lint gesammelt)",
+                        "policy-gate",
+                    ],
                     "checks": [
-                        {"context": "ci (Unit/Integration + Lint gesammelt)", "app_id": 9999999},
+                        {
+                            "context": "ci (Unit/Integration + Lint gesammelt)",
+                            "app_id": 9999999,
+                        },
                         {"context": "policy-gate"},
                     ],
                 }

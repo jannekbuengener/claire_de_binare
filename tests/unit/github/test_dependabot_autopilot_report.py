@@ -68,12 +68,20 @@ def _checks(
     ``policy-gate``, both hosted GitHub Actions Check Runs (name/status/conclusion).
     """
     check_runs = [
-        {"name": "ci (Unit/Integration + Lint gesammelt)", "status": "completed", "conclusion": conclusion},
+        {
+            "name": "ci (Unit/Integration + Lint gesammelt)",
+            "status": "completed",
+            "conclusion": conclusion,
+        },
         {"name": "policy-gate", "status": "completed", "conclusion": conclusion},
     ]
     if duplicate_conclusion is not None:
         check_runs.append(
-            {"name": "ci (Unit/Integration + Lint gesammelt)", "status": "completed", "conclusion": duplicate_conclusion}
+            {
+                "name": "ci (Unit/Integration + Lint gesammelt)",
+                "status": "completed",
+                "conclusion": duplicate_conclusion,
+            }
         )
     return {"check_runs": check_runs}
 
@@ -194,9 +202,9 @@ def _build_transport(
         f"repos/{REPO}/compare/{BASE_SHA}...{HEAD_SHA}": compare,
     }
     if check_runs_error is not None:
-        routes[f"repos/{REPO}/commits/{HEAD_SHA}/check-runs"] = lambda *_args, **_kwargs: (
-            _ for _ in ()
-        ).throw(check_runs_error)
+        routes[f"repos/{REPO}/commits/{HEAD_SHA}/check-runs"] = (
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(check_runs_error)
+        )
     else:
         routes[f"repos/{REPO}/commits/{HEAD_SHA}/check-runs"] = check_runs
     return report.InMemoryGhTransport(routes)
@@ -268,7 +276,15 @@ def test_human_commit_and_behind_merge_state_hold() -> None:
 def test_missing_required_check_holds() -> None:
     outcome = _run(
         _build_transport(
-            check_runs={"check_runs": [{"name": "unrelated-check", "status": "completed", "conclusion": "success"}]}
+            check_runs={
+                "check_runs": [
+                    {
+                        "name": "unrelated-check",
+                        "status": "completed",
+                        "conclusion": "success",
+                    }
+                ]
+            }
         )
     )
 
@@ -282,8 +298,16 @@ def test_in_progress_required_check_holds() -> None:
         _build_transport(
             check_runs={
                 "check_runs": [
-                    {"name": "ci (Unit/Integration + Lint gesammelt)", "status": "in_progress", "conclusion": ""},
-                    {"name": "policy-gate", "status": "completed", "conclusion": "success"},
+                    {
+                        "name": "ci (Unit/Integration + Lint gesammelt)",
+                        "status": "in_progress",
+                        "conclusion": "",
+                    },
+                    {
+                        "name": "policy-gate",
+                        "status": "completed",
+                        "conclusion": "success",
+                    },
                 ]
             }
         )
