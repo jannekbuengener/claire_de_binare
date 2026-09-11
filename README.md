@@ -6,6 +6,67 @@ This is the public GitHub landing page. CDB operates in shadow/paper mode — li
 [Deutsch] Claire de Binare (CDB) ist ein deterministisches, governance-first Trading-/Validation-System.
 Diese Root-README ist die GitHub-Haupt-Landingpage. Der aktive Pfad bleibt Shadow/Paper-first; Live-Kapital ist nicht freigegeben.
 
+## Portfolio Overview — Governance, Validation & Reliability
+
+Claire de Binare is useful as a portfolio case **not because it is a trading bot**, but because it asks a harder systems question:
+
+> **How do you stop a complex automated system from confusing “technically capable” with “proven safe to activate”?**
+
+The repository separates engineering progress, validation evidence and live-capital authorization into different states. A component may be implemented, a board stage may be `trade-capable`, and individual validation phases may be complete while **Live Readiness still remains NO-GO**.
+
+That separation is intentional. The system is designed to prefer a conservative stop over an unsupported production claim.
+
+### Status model
+
+| Layer | Meaning | Current portfolio interpretation |
+|---|---|---|
+| **Research / Engineering** | hypotheses, implementation and technical capability | active, evidence-producing system |
+| **Control-Board Stage** | operational capability classification | `trade-capable` in the Board context |
+| **Validation** | tests, replay, shadow, soak/chaos and evidence contracts | several phases evidenced as DONE/PASS |
+| **Live Readiness** | separate authorization question for real-capital exposure | independent from Board stage |
+| **LR-050** | live-capital canary gate | **NO-GO / fail-closed** |
+
+Authoritative current status remains the linked Live-Readiness and Control-Register SSOTs below. This overview does not replace them and does not authorize live trading.
+
+### Simplified control flow
+
+```mermaid
+flowchart LR
+    A[Market / Strategy Input] --> B[Deterministic Strategy Logic]
+    B --> C[Risk & Control Boundaries]
+    C --> D[Eligibility]
+    D --> E[Evidence]
+    E --> F[Validation]
+    F --> G{Live-readiness gates proven?}
+    G -->|No / uncertain| H[NO-GO / fail closed]
+    G -->|Only with all required gates| I[Human-authorized next stage]
+```
+
+### What this project demonstrates
+
+- **Deterministic systems:** explicit state and reproducible decision paths instead of opaque activation.
+- **Evidence-based validation:** tests, replay, shadow, soak and audit artifacts are treated as proof inputs, not decoration.
+- **Fail-closed behavior:** missing, stale or insufficient evidence does not silently become permission.
+- **Risk boundaries:** technical capability is kept separate from authority to expose real capital.
+- **Auditability:** status and decisions are anchored to explicit documents, evidence and tracked gates.
+- **Explicit uncertainty:** a partial PASS does not get promoted into a broader safety claim.
+
+### My role / AI-assisted development
+
+My core contribution is at the **system, governance and validation-design layer**:
+
+- defining boundaries and non-negotiable safety states,
+- structuring requirements and validation gates,
+- separating engineering capability from live-readiness authority,
+- orchestrating AI-assisted implementation and review work,
+- interpreting evidence and keeping unsupported claims fail-closed.
+
+A substantial part of implementation is AI-assisted. This repository should therefore **not** be read as a claim that I manually authored every line, nor as proof that I am a quantitative ML researcher or senior trading engineer. It is evidence of systems thinking, governance design, requirements, validation and AI-native delivery.
+
+For the recruiter-facing case narrative, see [Portfolio Case Study](docs/PORTFOLIO_CASE_STUDY.md).
+
+---
+
 ## Start Here
 
 - [CDB Strategic Idea Lab](docs/strategy/CDB_STRATEGIC_IDEA_LAB.md) — public strategy and architecture drafts, discussion space, and creative exploration around CDB's future-state concepts. Ideas, critique, and suggestions are welcome.
