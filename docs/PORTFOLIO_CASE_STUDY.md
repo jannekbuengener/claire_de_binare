@@ -34,7 +34,7 @@ A positive result at one layer cannot silently authorize a stronger claim at ano
 
 ## 3. Stage is not Live Readiness
 
-The root README currently records the Control-Board stage as `trade-capable`.
+At the time this case study was written (2026-09-11), the root README recorded the Control-Board stage as `trade-capable`. Treat this as a dated portfolio snapshot; the current stage must always be read from the canonical Control Register / root README.
 
 At the same time, the canonical Live-Readiness source records:
 
